@@ -1213,7 +1213,7 @@ function renderLeadTimeTable(data) {
     const tabsContainer = document.getElementById('leadTimeQuarterTabs');
     const tbody = document.querySelector('#leadTimeTable tbody');
     const byQuarter = data.by_quarter || {};
-    const quarters = Object.keys(byQuarter).sort().reverse(); // Most recent first
+    const quarters = Object.keys(byQuarter).sort(); // Chronological order (oldest first, same as chart bars)
     
     // Store for tab switching
     leadTimeByQuarter = byQuarter;
@@ -1224,14 +1224,17 @@ function renderLeadTimeTable(data) {
         return;
     }
     
-    // Render quarter tabs
+    // Most recent quarter (last in sorted list) should be active by default
+    const defaultActiveIdx = quarters.length - 1;
+    
+    // Render quarter tabs (oldest to newest, left to right)
     const tabsHtml = quarters.map((quarter, idx) => {
         const epics = byQuarter[quarter] || [];
         const validTimes = epics.filter(e => e.lead_time_days != null).map(e => e.lead_time_days);
         const avgDays = validTimes.length > 0 ? Math.round(validTimes.reduce((a, b) => a + b, 0) / validTimes.length) : 0;
         
         return `
-            <button class="quarter-tab-btn ${idx === 0 ? 'active' : ''}" data-quarter="${quarter}">
+            <button class="quarter-tab-btn ${idx === defaultActiveIdx ? 'active' : ''}" data-quarter="${quarter}">
                 ${quarter}
                 <span class="quarter-tab-info">${epics.length} epics • ${avgDays}d avg</span>
             </button>
@@ -1252,9 +1255,9 @@ function renderLeadTimeTable(data) {
         });
     });
     
-    // Render first quarter by default
+    // Render most recent quarter by default
     if (quarters.length > 0) {
-        renderLeadTimeEpicsForQuarter(quarters[0]);
+        renderLeadTimeEpicsForQuarter(quarters[defaultActiveIdx]);
     }
 }
 
