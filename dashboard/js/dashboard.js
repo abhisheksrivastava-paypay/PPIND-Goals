@@ -864,9 +864,19 @@ function calculateAvg3Months(monthly, months) {
 }
 
 function getPrev3Months(allMonths, currentMonthIndex) {
-    // Get the 3 months before the current month
+    // Get the 3 months BEFORE the current month (for comparison)
     const result = [];
     for (let i = currentMonthIndex - 1; i >= 0 && result.length < 3; i--) {
+        result.unshift(allMonths[i]);
+    }
+    return result;
+}
+
+function getLast3MonthsIncluding(allMonths, currentMonthIndex) {
+    // Get the current month + 2 prior months (for the avg column display)
+    // Example: for Sep (index 3), returns [Jul, Aug, Sep] (indices 1,2,3)
+    const result = [];
+    for (let i = currentMonthIndex; i >= 0 && result.length < 3; i--) {
         result.unshift(allMonths[i]);
     }
     return result;
@@ -878,17 +888,21 @@ function renderCycleTimeTableFromSample(data) {
     // All months in order: baseline months + months after baseline
     const allMonths = [...data.baseline_months, ...data.months_after_baseline];
     
-    // Build header row with: Baseline | Sep | Avg(Jul,Aug,Sep) | Oct | Avg(Aug,Sep,Oct) | ...
+    // Build header row with: Baseline | Sep | Avg(Jul,Aug,Sep) | Oct | Avg(Aug,Sep,Oct) | Nov | Avg(Sep,Oct,Nov) | Dec
+    // The Avg column appears BEFORE each month (starting from Oct) for comparison
+    // Before Month N: Avg(N-3, N-2, N-1)
     let headerRow1 = '<th>#</th><th>Team</th><th>EM</th>';
     headerRow1 += `<th>Baseline<br><small>(${data.baseline_months.join('+')}/3)</small></th>`;
     
     data.months_after_baseline.forEach((month, idx) => {
         const monthIndex = data.baseline_months.length + idx;
         const prev3 = getPrev3Months(allMonths, monthIndex);
-        headerRow1 += `<th>${month}</th>`;
-        if (idx < data.months_after_baseline.length - 1) {
+        
+        // For months after Sep (idx > 0), show Avg column BEFORE the month
+        if (idx > 0 && prev3.length === 3) {
             headerRow1 += `<th class="avg-col"><small>Avg(${prev3.join(',')})</small></th>`;
         }
+        headerRow1 += `<th>${month}</th>`;
     });
     headerRow1 += '<th>LinearB</th>';
     
@@ -930,19 +944,19 @@ function renderCycleTimeTableFromSample(data) {
             const prev3Avg = calculateAvg3Months(monthly, prev3);
             const currentMinutes = parseDurationToMinutes(monthly[month]);
             
+            // For months after Sep (mIdx > 0), show Avg column BEFORE the month
+            if (mIdx > 0 && prev3.length === 3) {
+                const avgKey = `avg_before_${month}`;
+                totals[avgKey] = (totals[avgKey] || 0) + prev3Avg;
+                rowHtml += `<td class="avg-col"><small>${formatDurationShort(prev3Avg)}</small></td>`;
+            }
+            
             // Color logic: Red if current > prev3Avg, else Green
             const colorClass = currentMinutes > prev3Avg ? 'cell-red' : 'cell-green';
             
             totals[month] = (totals[month] || 0) + currentMinutes;
             
             rowHtml += `<td class="${colorClass}">${monthly[month] || '-'}</td>`;
-            
-            // Add avg column except for the last month
-            if (mIdx < data.months_after_baseline.length - 1) {
-                const avgKey = `avg_${month}`;
-                totals[avgKey] = (totals[avgKey] || 0) + prev3Avg;
-                rowHtml += `<td class="avg-col"><small>${formatDurationShort(prev3Avg)}</small></td>`;
-            }
         });
         
         const link = LINEARB_LINKS[team.name];
@@ -967,19 +981,20 @@ function renderCycleTimeTableFromSample(data) {
         const prev3 = getPrev3Months(allMonths, monthIndex);
         const avgMonthMinutes = Math.round(totals[month] / teamCount);
         
-        // Calculate avg of prev 3 for totals row
+        // Calculate avg of prev 3 for totals row (for color comparison)
         let prev3TotalMinutes = 0;
         prev3.forEach(m => {
             prev3TotalMinutes += (totals[m] || totals.baseline) / teamCount;
         });
         const prev3AvgForTotals = Math.round(prev3TotalMinutes / 3);
         
-        const colorClass = avgMonthMinutes > prev3AvgForTotals ? 'cell-red' : 'cell-green';
-        footerHtml += `<td class="${colorClass}"><strong>${formatDurationShort(avgMonthMinutes)}</strong></td>`;
-        
-        if (mIdx < data.months_after_baseline.length - 1) {
+        // For months after Sep (mIdx > 0), show Avg column BEFORE the month
+        if (mIdx > 0 && prev3.length === 3) {
             footerHtml += `<td class="avg-col"><small>${formatDurationShort(prev3AvgForTotals)}</small></td>`;
         }
+        
+        const colorClass = avgMonthMinutes > prev3AvgForTotals ? 'cell-red' : 'cell-green';
+        footerHtml += `<td class="${colorClass}"><strong>${formatDurationShort(avgMonthMinutes)}</strong></td>`;
     });
     
     footerHtml += '<td></td></tr>';
