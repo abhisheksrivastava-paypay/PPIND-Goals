@@ -468,7 +468,7 @@ def export_metrics_by_repo(
         date_after: Start date (inclusive) in YYYY-MM-DD format
         date_before: End date (exclusive) in YYYY-MM-DD format
         output_path: Path to save the CSV output
-        roll_up: Aggregation period ("custom", "1d", "1w", "1m")
+        roll_up: Aggregation period ("custom", "1d", "1w", "1mo")
     
     Returns:
         Path to the saved CSV file
@@ -577,7 +577,7 @@ def export_metrics_by_team(
         date_after: Start date (inclusive) in YYYY-MM-DD format
         date_before: End date (exclusive) in YYYY-MM-DD format
         output_path: Path to save the CSV output
-        roll_up: Aggregation period ("custom", "1d", "1w", "1m")
+        roll_up: Aggregation period ("custom", "1d", "1w", "1mo")
     
     Returns:
         Path to the saved CSV file
@@ -829,7 +829,7 @@ def export_dashboard_json(
     # Fetch monthly aggregated data
     payload = {
         "group_by": "team",
-        "roll_up": "1m",  # Monthly roll-up
+        "roll_up": "1mo",  # Monthly roll-up (API requires "1mo", not "1m")
         "team_ids": [int(tid) for tid in team_ids],
         "requested_metrics": [
             {"name": "branch.computed.cycle_time", "agg": "p50"},

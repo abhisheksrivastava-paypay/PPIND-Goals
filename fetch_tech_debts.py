@@ -237,7 +237,7 @@ def process_tech_debts(pat: str, teams_config: List[Dict], quarters: List[Dict])
         team_name = team["name"]
         epic_key = team["epic_key"]
         
-        if epic_key.endswith("XXXXX"):
+        if not epic_key or epic_key.endswith("XXXXX"):
             print(f"  ⚠️ Skipping {team_name} - epic key not configured")
             continue
         
