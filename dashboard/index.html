@@ -144,10 +144,12 @@
                         <li><strong>Cycle Time:</strong> Time from first commit on a branch to when that code is deployed to production. Measured for each PR merged.</li>
                         <li><strong>P50 (Median):</strong> The 50th percentile value. Half of all PRs have cycle time below this, half above. More stable than average.</li>
                         <li><strong>Baseline:</strong> Average of P50 cycle times for June, July, and August 2025. Used as reference point.</li>
-                        <li><strong>Prev 3 Months Avg:</strong> Rolling average of the 3 months before the current month (e.g., for Dec: Sep + Oct + Nov average).</li>
-                        <li><strong>Trend Arrows:</strong> ↑ = cycle time increased (worse), ↓ = cycle time decreased (better).</li>
-                        <li><strong>Color Coding:</strong> <span class="cell-green" style="padding:2px 6px;border-radius:4px;">Green</span> = faster than baseline, <span class="cell-red" style="padding:2px 6px;border-radius:4px;">Red</span> = slower than baseline.</li>
-                        <li><strong>Data Source:</strong> LinearB API. Click team links to view detailed metrics in LinearB dashboard.</li>
+                        <li><strong>Monthly Columns:</strong> Shows each month starting from Sep (first month after baseline), with rolling 3-month average for comparison.</li>
+                        <li><strong>Avg Columns:</strong> Rolling average of the 3 months before the current column. Example: <code>Avg(Jul,Aug,Sep)</code> is shown before Oct column.</li>
+                        <li><strong>Color Coding:</strong> 
+                            <span class="cell-green" style="padding:2px 6px;border-radius:4px;">Green</span> = Month's P50 ≤ Previous 3-month avg (good), 
+                            <span class="cell-red" style="padding:2px 6px;border-radius:4px;">Red</span> = Month's P50 > Previous 3-month avg (needs attention).</li>
+                        <li><strong>Data Source:</strong> LinearB API. Click 📊 link to view detailed metrics in LinearB dashboard.</li>
                     </ul>
                 </div>
             </section>
@@ -285,6 +287,6 @@
         <p>Loading dashboard data...</p>
     </div>
 
-    <script src="js/dashboard.js?v=20251211n"></script>
+    <script src="js/dashboard.js?v=20251211p"></script>
 </body>
 </html>

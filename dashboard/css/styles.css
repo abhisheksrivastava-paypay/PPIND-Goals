@@ -732,3 +732,42 @@ body {
 ::-webkit-scrollbar-thumb:hover {
     background: var(--text-muted);
 }
+
+/* =============================================================================
+   CYCLE TIME TABLE STYLES
+   ============================================================================= */
+
+.cycle-time-legend {
+    margin-bottom: 12px;
+    padding: 8px 16px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+}
+
+.cycle-time-table .avg-col {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    font-weight: normal;
+    border-left: 2px solid var(--border-color);
+}
+
+.cycle-time-table th.avg-col {
+    font-size: 0.75rem;
+}
+
+.cycle-time-table td.avg-col small {
+    font-size: 0.8rem;
+}
+
+/* Tech Debts clickable numbers */
+.data-table td a.jira-link {
+    text-decoration: none;
+    color: var(--accent-blue);
+    font-weight: 600;
+}
+
+.data-table td a.jira-link:hover {
+    text-decoration: underline;
+    color: #2563eb;
+}

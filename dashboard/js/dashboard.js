@@ -17,6 +17,15 @@ const DATA_PATHS = {
 };
 
 const JIRA_BASE_URL = 'https://paypay-corp.rickcloud.jp/jira/browse/';
+const JIRA_SEARCH_URL = 'https://paypay-corp.rickcloud.jp/jira/issues/?jql=';
+
+// Quarter date ranges for tech debt JQL queries (FY quarters)
+const QUARTER_DATES = {
+    'FY25 Q1': { start: '2025-04-01', end: '2025-06-30' },
+    'FY25 Q2': { start: '2025-07-01', end: '2025-09-30' },
+    'FY25 Q3': { start: '2025-10-01', end: '2025-12-31' },
+    'FY25 Q4': { start: '2026-01-01', end: '2026-03-31' },
+};
 
 // Chart.js default configuration
 Chart.defaults.color = '#64748b';
@@ -143,6 +152,41 @@ function createJiraLink(key, text) {
     if (!key) return '-';
     const displayText = text || key;
     return `<a href="${JIRA_BASE_URL}${key}" target="_blank" class="jira-link">${displayText}</a>`;
+}
+
+/**
+ * Create a Jira search link for tech debt tickets
+ * @param {string|string[]} epicKeys - Epic key(s) to search under
+ * @param {string} quarter - Quarter name (e.g., 'FY25 Q1')
+ * @param {string} type - 'start', 'reduced', or 'current'
+ * @param {number} count - The count to display
+ */
+function createTechDebtJiraLink(epicKeys, quarter, type, count) {
+    if (count === 0 || count === undefined) return '0';
+    
+    const epics = Array.isArray(epicKeys) ? epicKeys : [epicKeys];
+    if (!epics.length || !epics[0]) return String(count);
+    
+    const dates = QUARTER_DATES[quarter];
+    if (!dates) return String(count);
+    
+    // Build epic link condition
+    const epicCondition = epics.map(e => `"Epic Link" = ${e}`).join(' OR ');
+    
+    let jql = '';
+    if (type === 'start') {
+        // Tickets that existed at start of quarter (created before quarter start and not resolved before quarter start)
+        jql = `(${epicCondition}) AND issuetype in (Story, Task, Sub-task) AND created < "${dates.start}" AND (resolved >= "${dates.start}" OR resolved IS EMPTY)`;
+    } else if (type === 'reduced') {
+        // Tickets resolved during the quarter
+        jql = `(${epicCondition}) AND issuetype in (Story, Task, Sub-task) AND resolved >= "${dates.start}" AND resolved <= "${dates.end}"`;
+    } else if (type === 'current') {
+        // Current open tickets (for WIP quarter)
+        jql = `(${epicCondition}) AND issuetype in (Story, Task, Sub-task) AND resolution IS EMPTY`;
+    }
+    
+    const encodedJql = encodeURIComponent(jql);
+    return `<a href="${JIRA_SEARCH_URL}${encodedJql}" target="_blank" class="jira-link">${count}</a>`;
 }
 
 function formatEM(name) {
@@ -527,9 +571,18 @@ function renderTechDebtsTableFromSample(data) {
         totals.q3Red += team.q3.red || 0;
         
         const statusClass = getStatusBadgeClass(team.status);
+        const epicKeys = team.epics || [team.epic];
         const epicLink = team.epics 
             ? team.epics.map(e => createJiraLink(e)).join(', ')
             : createJiraLink(team.epic);
+        
+        // Create clickable Jira links for each count
+        const q1Start = createTechDebtJiraLink(epicKeys, 'FY25 Q1', 'start', team.q1.base);
+        const q1Red = createTechDebtJiraLink(epicKeys, 'FY25 Q1', 'reduced', team.q1.red);
+        const q2Start = createTechDebtJiraLink(epicKeys, 'FY25 Q2', 'start', team.q2.base);
+        const q2Red = createTechDebtJiraLink(epicKeys, 'FY25 Q2', 'reduced', team.q2.red);
+        const q3Start = createTechDebtJiraLink(epicKeys, 'FY25 Q3', 'start', team.q3.base);
+        const q3Red = createTechDebtJiraLink(epicKeys, 'FY25 Q3', 'reduced', team.q3.red);
         
         html += `
             <tr>
@@ -537,14 +590,14 @@ function renderTechDebtsTableFromSample(data) {
                 <td>${team.name}</td>
                 <td>${formatEM(team.em)}</td>
                 <td>${epicLink} <span class="status-badge ${statusClass}">${team.status}</span></td>
-                <td>${team.q1.base}</td>
-                <td>${team.q1.red}</td>
+                <td>${q1Start}</td>
+                <td>${q1Red}</td>
                 <td class="${getGoalCellClass(team.q1.pct, goalPct)}">${team.q1.pct}%</td>
-                <td>${team.q2.base}</td>
-                <td>${team.q2.red}</td>
+                <td>${q2Start}</td>
+                <td>${q2Red}</td>
                 <td class="${getGoalCellClass(team.q2.pct, goalPct)}">${team.q2.pct}%</td>
-                <td>${team.q3.base}</td>
-                <td>${team.q3.red}</td>
+                <td>${q3Start}</td>
+                <td>${q3Red}</td>
                 <td class="${getGoalCellClass(team.q3.pct, goalPct)}">${team.q3.pct}%</td>
             </tr>
         `;
@@ -627,25 +680,51 @@ const LINEARB_LINKS = {
 };
 
 function renderCycleTimeSampleData() {
-    // Sample data - Baseline = Avg of Jun, Jul, Aug 2025
-    // Prev 3 Months Avg = Average of Sep, Oct, Nov 2025 (3 months before current)
-    // Latest = Dec 2025 (current month)
+    // Sample data - Monthly P50 cycle times
+    // Baseline = Avg of Jun, Jul, Aug 2025
+    // Show each month since baseline with rolling 3-month average comparison
+    // Color: Red if month > prev 3 avg, Green if month <= prev 3 avg
     const sampleData = {
-        baseline_period: 'Jun-Aug 2025',
-        recent_period: 'Sep-Nov 2025',  // Always last 3 months before current month
-        latest_month: 'Dec 2025',
+        baseline_months: ['Jun', 'Jul', 'Aug'],
+        months_after_baseline: ['Sep', 'Oct', 'Nov', 'Dec'],  // Months to display after baseline
         teams: [
-            { name: 'Factoring', em: 'Kanav', baseline: '4 d 5 h 36 m', recent: '5 d 4 h 46 m', recentTrend: 'up', latest: '7 d 15 h 9 m', latestTrend: 'up' },
-            { name: 'Front End App Team', em: 'Ashish Jindal', baseline: '1 d 0 h 48 m', recent: '0 d 12 h 20 m', recentTrend: 'down', latest: '0 d 6 h 42 m', latestTrend: 'down' },
-            { name: 'Front End Web Team', em: 'Ashish Jindal', baseline: '0 d 10 h 45 m', recent: '0 d 16 h 53 m', recentTrend: 'up', latest: '0 d 20 h 56 m', latestTrend: 'up' },
-            { name: 'GenAI Solutions', em: 'Ritesh Jha', baseline: '12 d 10 h 9 m', recent: '14 d 10 h 20 m', recentTrend: 'up', latest: '6 d 23 h 14 m', latestTrend: 'down' },
-            { name: 'Gift Voucher', em: 'Akhil Soni', baseline: '1 d 14 h 56 m', recent: '1 d 13 h 1 m', recentTrend: 'down', latest: '1 d 15 h 15 m', latestTrend: 'up' },
-            { name: 'Gift Voucher Reward Engine', em: 'Vivek Kumar', baseline: '1 d 3 h 50 m', recent: '5 d 5 h 30 m', recentTrend: 'up', latest: '12 d 23 h 22 m', latestTrend: 'up' },
-            { name: 'Notifications', em: 'Raunak Ladha', baseline: '5 d 19 h 31 m', recent: '13 d 9 h 11 m', recentTrend: 'up', latest: '23 d 18 h 1 m', latestTrend: 'up' },
-            { name: 'Payroll & External PSP', em: 'Kanav', baseline: '5 d 15 h 1 m', recent: '2 d 17 h 5 m', recentTrend: 'down', latest: '2 d 23 h 24 m', latestTrend: 'down' },
-            { name: 'Point', em: 'Rohit Dua', baseline: '2 d 13 h 8 m', recent: '1 d 23 h 11 m', recentTrend: 'down', latest: '1 d 2 h 52 m', latestTrend: 'down' },
-        ],
-        total: { baseline: '3 d 21 h 5 m', recent: '5 d 1 h 49 m', recentTrend: 'up', latest: '6 d 11 h 13 m', latestTrend: 'up' }
+            { 
+                name: 'Factoring', em: 'Kanav',
+                monthly: { Jun: '3 d 2 h 0 m', Jul: '4 d 8 h 0 m', Aug: '5 d 7 h 0 m', Sep: '4 d 12 h 0 m', Oct: '5 d 18 h 0 m', Nov: '5 d 4 h 0 m', Dec: '7 d 15 h 9 m' }
+            },
+            { 
+                name: 'Front End App Team', em: 'Ashish Jindal',
+                monthly: { Jun: '1 d 2 h 0 m', Jul: '0 d 22 h 0 m', Aug: '1 d 2 h 0 m', Sep: '0 d 18 h 0 m', Oct: '0 d 10 h 0 m', Nov: '0 d 8 h 0 m', Dec: '0 d 6 h 42 m' }
+            },
+            { 
+                name: 'Front End Web Team', em: 'Ashish Jindal',
+                monthly: { Jun: '0 d 8 h 0 m', Jul: '0 d 12 h 0 m', Aug: '0 d 12 h 0 m', Sep: '0 d 14 h 0 m', Oct: '0 d 18 h 0 m', Nov: '0 d 18 h 0 m', Dec: '0 d 20 h 56 m' }
+            },
+            { 
+                name: 'GenAI Solutions', em: 'Ritesh Jha',
+                monthly: { Jun: '10 d 0 h 0 m', Jul: '14 d 0 h 0 m', Aug: '13 d 6 h 0 m', Sep: '15 d 2 h 0 m', Oct: '14 d 8 h 0 m', Nov: '14 d 1 h 0 m', Dec: '6 d 23 h 14 m' }
+            },
+            { 
+                name: 'Gift Voucher', em: 'Akhil Soni',
+                monthly: { Jun: '1 d 12 h 0 m', Jul: '1 d 18 h 0 m', Aug: '1 d 14 h 0 m', Sep: '1 d 10 h 0 m', Oct: '1 d 16 h 0 m', Nov: '1 d 13 h 0 m', Dec: '1 d 15 h 15 m' }
+            },
+            { 
+                name: 'Gift Voucher Reward Engine', em: 'Vivek Kumar',
+                monthly: { Jun: '1 d 0 h 0 m', Jul: '1 d 4 h 0 m', Aug: '1 d 7 h 0 m', Sep: '3 d 12 h 0 m', Oct: '5 d 6 h 0 m', Nov: '6 d 22 h 0 m', Dec: '12 d 23 h 22 m' }
+            },
+            { 
+                name: 'Notifications', em: 'Raunak Ladha',
+                monthly: { Jun: '4 d 12 h 0 m', Jul: '6 d 8 h 0 m', Aug: '6 d 14 h 0 m', Sep: '10 d 4 h 0 m', Oct: '14 d 2 h 0 m', Nov: '15 d 21 h 0 m', Dec: '23 d 18 h 1 m' }
+            },
+            { 
+                name: 'Payroll & External PSP', em: 'Kanav',
+                monthly: { Jun: '5 d 8 h 0 m', Jul: '6 d 2 h 0 m', Aug: '5 d 11 h 0 m', Sep: '3 d 4 h 0 m', Oct: '2 d 12 h 0 m', Nov: '2 d 11 h 0 m', Dec: '2 d 23 h 24 m' }
+            },
+            { 
+                name: 'Point', em: 'Rohit Dua',
+                monthly: { Jun: '2 d 8 h 0 m', Jul: '2 d 16 h 0 m', Aug: '2 d 15 h 0 m', Sep: '2 d 2 h 0 m', Oct: '1 d 20 h 0 m', Nov: '1 d 23 h 0 m', Dec: '1 d 2 h 52 m' }
+            },
+        ]
     };
     
     renderCycleTimeChartFromSample(sampleData);
@@ -658,9 +737,22 @@ function renderCycleTimeChartFromSample(data) {
     const ctx = document.getElementById('cycleTimeChart').getContext('2d');
     
     const labels = data.teams.map(t => t.name);
-    const baselineData = data.teams.map(t => parseDurationToMinutes(t.baseline));
-    const recentData = data.teams.map(t => parseDurationToMinutes(t.recent));
-    const latestData = data.teams.map(t => parseDurationToMinutes(t.latest));
+    const allMonths = [...data.baseline_months, ...data.months_after_baseline];
+    
+    // Calculate baseline for each team
+    const baselineData = data.teams.map(t => calculateAvg3Months(t.monthly, data.baseline_months));
+    
+    // Get latest month data
+    const latestMonth = data.months_after_baseline[data.months_after_baseline.length - 1];
+    const latestData = data.teams.map(t => parseDurationToMinutes(t.monthly[latestMonth]));
+    
+    // Calculate prev 3 avg for latest month
+    const latestMonthIndex = allMonths.indexOf(latestMonth);
+    const prev3ForLatest = getPrev3Months(allMonths, latestMonthIndex);
+    const prev3AvgData = data.teams.map(t => calculateAvg3Months(t.monthly, prev3ForLatest));
+    
+    // Determine bar colors based on comparison with prev 3 avg
+    const latestColors = latestData.map((val, i) => val > prev3AvgData[i] ? '#ef4444' : '#22c55e');
     
     charts.cycleTimeChart = new Chart(ctx, {
         type: 'bar',
@@ -668,21 +760,21 @@ function renderCycleTimeChartFromSample(data) {
             labels: labels,
             datasets: [
                 {
-                    label: `Baseline (${data.baseline_period})`,
+                    label: `Baseline (${data.baseline_months.join('-')})`,
                     data: baselineData,
                     backgroundColor: '#94a3b8',
                     borderWidth: 0
                 },
                 {
-                    label: `${data.recent_period} Avg`,
-                    data: recentData,
+                    label: `Prev 3 Avg (${prev3ForLatest.join('-')})`,
+                    data: prev3AvgData,
                     backgroundColor: '#3b82f6',
                     borderWidth: 0
                 },
                 {
-                    label: `${data.latest_month} (Latest)`,
+                    label: `${latestMonth} (Latest)`,
                     data: latestData,
-                    backgroundColor: '#22c55e',
+                    backgroundColor: latestColors,
                     borderWidth: 0
                 }
             ]
@@ -713,7 +805,7 @@ function renderCycleTimeChartFromSample(data) {
                     beginAtZero: true,
                     title: {
                         display: true,
-                        text: 'Cycle Time'
+                        text: 'Cycle Time (P50)'
                     },
                     ticks: {
                         callback: value => formatDurationShort(value)
@@ -758,63 +850,143 @@ function parseDurationToMinutes(durationStr) {
     return total;
 }
 
+function calculateAvg3Months(monthly, months) {
+    // Calculate average of 3 months in minutes
+    let total = 0;
+    let count = 0;
+    months.forEach(m => {
+        if (monthly[m]) {
+            total += parseDurationToMinutes(monthly[m]);
+            count++;
+        }
+    });
+    return count > 0 ? Math.round(total / count) : 0;
+}
+
+function getPrev3Months(allMonths, currentMonthIndex) {
+    // Get the 3 months before the current month
+    const result = [];
+    for (let i = currentMonthIndex - 1; i >= 0 && result.length < 3; i--) {
+        result.unshift(allMonths[i]);
+    }
+    return result;
+}
+
 function renderCycleTimeTableFromSample(data) {
     const container = document.querySelector('#cycle-time .data-table-container');
     
-    // Build complete table with updated headers
+    // All months in order: baseline months + months after baseline
+    const allMonths = [...data.baseline_months, ...data.months_after_baseline];
+    
+    // Build header row with: Baseline | Sep | Avg(Jul,Aug,Sep) | Oct | Avg(Aug,Sep,Oct) | ...
+    let headerRow1 = '<th>#</th><th>Team</th><th>EM</th>';
+    headerRow1 += `<th>Baseline<br><small>(${data.baseline_months.join('+')}/3)</small></th>`;
+    
+    data.months_after_baseline.forEach((month, idx) => {
+        const monthIndex = data.baseline_months.length + idx;
+        const prev3 = getPrev3Months(allMonths, monthIndex);
+        headerRow1 += `<th>${month}</th>`;
+        if (idx < data.months_after_baseline.length - 1) {
+            headerRow1 += `<th class="avg-col"><small>Avg(${prev3.join(',')})</small></th>`;
+        }
+    });
+    headerRow1 += '<th>LinearB</th>';
+    
     let html = `
-        <table class="data-table kpi-table" id="cycleTimeTable">
+        <div class="cycle-time-legend">
+            <span class="cell-green" style="padding:2px 8px;border-radius:4px;">Green = ≤ Prev 3 Avg</span>
+            <span class="cell-red" style="padding:2px 8px;border-radius:4px;margin-left:8px;">Red = > Prev 3 Avg</span>
+        </div>
+        <table class="data-table kpi-table cycle-time-table" id="cycleTimeTable">
             <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Team</th>
-                    <th>EM</th>
-                    <th>Baseline<br><small>(Avg ${data.baseline_period})</small></th>
-                    <th>${data.recent_period}<br><small>(Avg)</small></th>
-                    <th>${data.latest_month}<br><small>(Latest)</small></th>
-                    <th>LinearB Charts</th>
-                </tr>
+                <tr>${headerRow1}</tr>
             </thead>
             <tbody>
     `;
     
+    // Track totals for each column
+    const totals = { baseline: 0 };
+    data.months_after_baseline.forEach(m => { totals[m] = 0; totals[`avg_${m}`] = 0; });
+    
     data.teams.forEach((team, idx) => {
-        const recentClass = team.recentTrend === 'up' ? 'trend-up cell-red' : (team.recentTrend === 'down' ? 'trend-down cell-green' : '');
-        const latestClass = team.latestTrend === 'up' ? 'trend-up cell-red' : (team.latestTrend === 'down' ? 'trend-down cell-green' : '');
+        const monthly = team.monthly;
         
-        const link = LINEARB_LINKS[team.name];
-        const linkHtml = link 
-            ? `<a href="${link}" target="_blank" class="jira-link">${team.name}</a>`
-            : '-';
+        // Calculate baseline (avg of Jun, Jul, Aug)
+        const baselineMinutes = calculateAvg3Months(monthly, data.baseline_months);
+        const baseline = formatDurationShort(baselineMinutes);
+        totals.baseline += baselineMinutes;
         
-        html += `
+        let rowHtml = `
             <tr>
                 <td>${idx + 1}</td>
                 <td>${team.name}</td>
                 <td>${formatEM(team.em)}</td>
-                <td>${team.baseline}</td>
-                <td class="${recentClass}">${team.recent}</td>
-                <td class="${latestClass}">${team.latest}</td>
-                <td>${linkHtml}</td>
-            </tr>
+                <td>${baseline}</td>
         `;
+        
+        data.months_after_baseline.forEach((month, mIdx) => {
+            const monthIndex = data.baseline_months.length + mIdx;
+            const prev3 = getPrev3Months(allMonths, monthIndex);
+            const prev3Avg = calculateAvg3Months(monthly, prev3);
+            const currentMinutes = parseDurationToMinutes(monthly[month]);
+            
+            // Color logic: Red if current > prev3Avg, else Green
+            const colorClass = currentMinutes > prev3Avg ? 'cell-red' : 'cell-green';
+            
+            totals[month] = (totals[month] || 0) + currentMinutes;
+            
+            rowHtml += `<td class="${colorClass}">${monthly[month] || '-'}</td>`;
+            
+            // Add avg column except for the last month
+            if (mIdx < data.months_after_baseline.length - 1) {
+                const avgKey = `avg_${month}`;
+                totals[avgKey] = (totals[avgKey] || 0) + prev3Avg;
+                rowHtml += `<td class="avg-col"><small>${formatDurationShort(prev3Avg)}</small></td>`;
+            }
+        });
+        
+        const link = LINEARB_LINKS[team.name];
+        const linkHtml = link 
+            ? `<a href="${link}" target="_blank" class="jira-link">📊</a>`
+            : '-';
+        rowHtml += `<td>${linkHtml}</td></tr>`;
+        
+        html += rowHtml;
     });
     
-    // Footer with totals
-    const totalRecentClass = data.total.recentTrend === 'up' ? 'trend-up cell-red' : 'trend-down cell-green';
-    const totalLatestClass = data.total.latestTrend === 'up' ? 'trend-up cell-red' : 'trend-down cell-green';
+    // Footer with averages
+    const teamCount = data.teams.length;
+    let footerHtml = `
+        <tr class="totals-row">
+            <td colspan="3"><strong>PPIND Average</strong></td>
+            <td><strong>${formatDurationShort(Math.round(totals.baseline / teamCount))}</strong></td>
+    `;
+    
+    data.months_after_baseline.forEach((month, mIdx) => {
+        const monthIndex = data.baseline_months.length + mIdx;
+        const prev3 = getPrev3Months(allMonths, monthIndex);
+        const avgMonthMinutes = Math.round(totals[month] / teamCount);
+        
+        // Calculate avg of prev 3 for totals row
+        let prev3TotalMinutes = 0;
+        prev3.forEach(m => {
+            prev3TotalMinutes += (totals[m] || totals.baseline) / teamCount;
+        });
+        const prev3AvgForTotals = Math.round(prev3TotalMinutes / 3);
+        
+        const colorClass = avgMonthMinutes > prev3AvgForTotals ? 'cell-red' : 'cell-green';
+        footerHtml += `<td class="${colorClass}"><strong>${formatDurationShort(avgMonthMinutes)}</strong></td>`;
+        
+        if (mIdx < data.months_after_baseline.length - 1) {
+            footerHtml += `<td class="avg-col"><small>${formatDurationShort(prev3AvgForTotals)}</small></td>`;
+        }
+    });
+    
+    footerHtml += '<td></td></tr>';
     
     html += `
             </tbody>
-            <tfoot>
-                <tr class="totals-row">
-                    <td colspan="3"><strong>PPIND Average</strong></td>
-                    <td><strong>${data.total.baseline}</strong></td>
-                    <td class="${totalRecentClass}"><strong>${data.total.recent}</strong></td>
-                    <td class="${totalLatestClass}"><strong>${data.total.latest}</strong></td>
-                    <td></td>
-                </tr>
-            </tfoot>
+            <tfoot>${footerHtml}</tfoot>
         </table>
     `;
     
