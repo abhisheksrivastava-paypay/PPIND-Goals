@@ -1,0 +1,39 @@
+{
+  "_comment": "Map each team to their Tech Debt epic key in Jira. Some teams are combined for reporting purposes.",
+  "teams": [
+    {
+      "name": "Front End",
+      "epic_key": "PP-345840",
+      "_note": "Combines Front End App Team + Front End Web Team"
+    },
+    {
+      "name": "Financial Solutions",
+      "epic_key": "PP-339898",
+      "_note": "Combines Factoring + Payroll & External PSP"
+    },
+    {
+      "name": "GenAI Solutions",
+      "epic_key": "GENAI-596"
+    },
+    {
+      "name": "Gift Voucher",
+      "epic_key": "GV-359"
+    },
+    {
+      "name": "Gift Voucher Reward Engine",
+      "epic_key": "GV-2398"
+    },
+    {
+      "name": "Notification",
+      "epic_key": "PP-345194"
+    },
+    {
+      "name": "Point",
+      "epic_key": "PP-343725"
+    },
+    {
+      "name": "Risk Team",
+      "epic_key": ""
+    }
+  ]
+}

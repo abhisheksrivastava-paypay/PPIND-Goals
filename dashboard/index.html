@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PPIND Engineering KPI Dashboard</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo-section">
+                    <h1>PPIND Engineering KPI Dashboard</h1>
+                    <span class="org-badge">PayPay India</span>
+                </div>
+                <div class="header-meta">
+                    <span class="last-updated" id="lastUpdated">Last updated: --</span>
+                    <button class="refresh-btn" onclick="loadAllData()">↻ Refresh</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="nav-tabs">
+            <button class="tab-btn active" data-tab="incidents">Incident / Defect Ratio</button>
+            <button class="tab-btn" data-tab="tech-debts">Tech Debts</button>
+            <button class="tab-btn" data-tab="cycle-time">Cycle Time</button>
+            <button class="tab-btn" data-tab="lead-time">Lead Time</button>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            
+            <!-- Incidents Section -->
+            <section id="incidents" class="tab-content active">
+                <div class="section-header">
+                    <h2>Incident / Defect Ratio</h2>
+                    <p class="section-desc">Production incidents tracked by team with incident ratio (Incidents/Releases)</p>
+                </div>
+
+                <div class="data-table-container">
+                    <table class="data-table kpi-table" id="incidentsTable">
+                        <thead>
+                            <tr>
+                                <th rowspan="2">Team</th>
+                                <th rowspan="2">EM</th>
+                                <th colspan="3" class="quarter-header baseline">FY24 Q4 (Baseline)</th>
+                                <th colspan="3" class="quarter-header">FY25 Q1</th>
+                                <th colspan="4" class="quarter-header">FY25 Q2</th>
+                            </tr>
+                            <tr>
+                                <th>Incidents</th>
+                                <th>Releases</th>
+                                <th>Incident Ratio</th>
+                                <th>Incidents</th>
+                                <th>Releases</th>
+                                <th>Incident Ratio</th>
+                                <th>Incidents</th>
+                                <th>Releases</th>
+                                <th>Incident Ratio</th>
+                                <th>Incident Link</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                        <tfoot>
+                            <tr class="totals-row">
+                                <td colspan="2"><strong>PayPay India</strong></td>
+                                <td id="incidentTotalQ4Incidents">-</td>
+                                <td id="incidentTotalQ4Releases">-</td>
+                                <td id="incidentTotalQ4Ratio">-</td>
+                                <td id="incidentTotalQ1Incidents">-</td>
+                                <td id="incidentTotalQ1Releases">-</td>
+                                <td id="incidentTotalQ1Ratio">-</td>
+                                <td id="incidentTotalQ2Incidents">-</td>
+                                <td id="incidentTotalQ2Releases">-</td>
+                                <td id="incidentTotalQ2Ratio">-</td>
+                                <td>-</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Tech Debts Section -->
+            <section id="tech-debts" class="tab-content">
+                <div class="section-header">
+                    <h2>PPIND FY25 Tech Debts</h2>
+                    <p class="section-desc">Technical debt reduction tracking by quarter</p>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="techDebtsChart"></canvas>
+                </div>
+
+                <div class="data-table-container">
+                    <table class="data-table kpi-table" id="techDebtsTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Team</th>
+                                <th>EM</th>
+                                <th>Tech Debt Epic</th>
+                                <th>Q1 Baseline</th>
+                                <th>Q1 Reduction - Count</th>
+                                <th>Q1 Reduction - %</th>
+                                <th>Q2 Baseline</th>
+                                <th>Q2 Reduction - Count</th>
+                                <th>Q2 Reduction - %</th>
+                                <th>Q3 Baseline</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                        <tfoot>
+                            <tr class="totals-row">
+                                <td></td>
+                                <td><strong>Total</strong></td>
+                                <td></td>
+                                <td></td>
+                                <td id="tdTotalQ1Baseline">-</td>
+                                <td id="tdTotalQ1Reduction">-</td>
+                                <td id="tdTotalQ1Percent">-</td>
+                                <td id="tdTotalQ2Baseline">-</td>
+                                <td id="tdTotalQ2Reduction">-</td>
+                                <td id="tdTotalQ2Percent">-</td>
+                                <td id="tdTotalQ3Baseline">-</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Cycle Time Section -->
+            <section id="cycle-time" class="tab-content">
+                <div class="section-header">
+                    <h2>Cycle Time (P50)</h2>
+                    <p class="section-desc">Average P50 Cycle Time from first commit to production by team</p>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="cycleTimeChart"></canvas>
+                </div>
+
+                <div class="data-table-container">
+                    <table class="data-table kpi-table" id="cycleTimeTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Team</th>
+                                <th>EM</th>
+                                <th>Baseline Cycle Time (Revised)<br><small>(Average of P50 for 3 months)</small></th>
+                                <th>Cycle Time<br><small>(Jul, Aug, Sep)</small></th>
+                                <th>Cycle Time<br><small>(Latest Month)</small></th>
+                                <th>LinearB Dashboard Links</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                        <tfoot>
+                            <tr class="totals-row">
+                                <td></td>
+                                <td><strong>PPIND</strong></td>
+                                <td></td>
+                                <td id="ctBaselineTotal">-</td>
+                                <td id="ctQ1Total">-</td>
+                                <td id="ctLatestTotal">-</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Lead Time Section -->
+            <section id="lead-time" class="tab-content">
+                <div class="section-header">
+                    <h2>Lead Time</h2>
+                    <p class="section-desc">Epic lead time from PRD Start Date to Release Date (Done epics only)</p>
+                </div>
+
+                <!-- Scope Tabs: PayPay All, PPIND Only, PayPay excl. PPIND -->
+                <nav class="scope-tabs" id="leadTimeScopeTabs">
+                    <button class="scope-tab-btn" data-scope="paypay_all">PayPay All</button>
+                    <button class="scope-tab-btn active" data-scope="ppind_only">PPIND Only</button>
+                    <button class="scope-tab-btn" data-scope="excl_ppind">PayPay (excl. PPIND)</button>
+                </nav>
+
+                <div class="stats-grid" id="leadTimeStats">
+                    <div class="stat-card">
+                        <span class="stat-label">Avg Lead Time</span>
+                        <span class="stat-value" id="avgLeadTime">--</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Median Lead Time</span>
+                        <span class="stat-value" id="medianLeadTime">--</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Total Epics</span>
+                        <span class="stat-value" id="totalEpics">--</span>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="leadTimeChart"></canvas>
+                </div>
+
+                <div class="data-table-container">
+                    <h3>Epics by Quarter</h3>
+                    <table class="data-table" id="leadTimeTable">
+                        <thead>
+                            <tr>
+                                <th>Epic</th>
+                                <th>Summary</th>
+                                <th>Status</th>
+                                <th>Lead Time</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Data sourced from LinearB & Jira APIs • Updated weekly via GitHub Actions</p>
+        </footer>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <p>Loading dashboard data...</p>
+    </div>
+
+    <script src="js/dashboard.js?v=20251211e"></script>
+</body>
+</html>

@@ -1,0 +1,102 @@
+{
+  "_comment": "Team configuration with Engineering Managers and tech debt epic mappings",
+  "teams": [
+    {
+      "name": "GVRE",
+      "display_name": "Gift Voucher Reward Engine",
+      "em": "Vivek Kumar",
+      "em_email": "vivek.kumar@paypay-corp.co.jp",
+      "tech_debt_epic": "GV-2398",
+      "linearb_team_name": "Gift Voucher Reward Engine"
+    },
+    {
+      "name": "GV",
+      "display_name": "Gift Voucher",
+      "em": "Akhil Soni",
+      "em_email": "akhil.soni@paypay-corp.co.jp",
+      "tech_debt_epic": "GV-359",
+      "linearb_team_name": "Gift Voucher"
+    },
+    {
+      "name": "Gen-AI Solutions",
+      "display_name": "GenAI Solutions",
+      "em": "Ritesh Jha",
+      "em_email": "ritesh.jha@paypay-corp.co.jp",
+      "tech_debt_epic": "GENAI-596",
+      "linearb_team_name": "GenAI Solutions"
+    },
+    {
+      "name": "Financial Solutions",
+      "display_name": "Financial Solutions",
+      "em": "Kanav",
+      "em_email": "kanav@paypay-corp.co.jp",
+      "tech_debt_epic": "PP-339898",
+      "linearb_team_name": "Factoring"
+    },
+    {
+      "name": "Notifications",
+      "display_name": "Notifications",
+      "em": "Raunak Ladha",
+      "em_email": "raunak.ladha@paypay-corp.co.jp",
+      "tech_debt_epic": "PP-345194",
+      "linearb_team_name": "Notification"
+    },
+    {
+      "name": "Point",
+      "display_name": "Point",
+      "em": "Rohit Dua",
+      "em_email": "rohit.dua@paypay-corp.co.jp",
+      "tech_debt_epic": "PP-343725",
+      "linearb_team_name": "Point"
+    },
+    {
+      "name": "Frontend",
+      "display_name": "Frontend",
+      "em": "Ashish Jindal",
+      "em_email": "ashish.jindal@paypay-corp.co.jp",
+      "tech_debt_epic": "PP-345840",
+      "linearb_team_name": "Front End Web Team"
+    },
+    {
+      "name": "Infra",
+      "display_name": "Infrastructure",
+      "em": "Amogh Garg",
+      "em_email": "amogh.garg@paypay-corp.co.jp",
+      "tech_debt_epic": "PP-345247",
+      "linearb_team_name": "Infrastructure"
+    },
+    {
+      "name": "FE App",
+      "display_name": "Front End App Team",
+      "em": "Ashish Jindal",
+      "em_email": "ashish.jindal@paypay-corp.co.jp",
+      "tech_debt_epic": "",
+      "linearb_team_name": "Front End App Team"
+    },
+    {
+      "name": "Payroll & External PSP",
+      "display_name": "Payroll & External PSP",
+      "em": "Kanav",
+      "em_email": "kanav@paypay-corp.co.jp",
+      "tech_debt_epic": "",
+      "linearb_team_name": "Payroll & External PSP"
+    },
+    {
+      "name": "Risk Team",
+      "display_name": "Risk Team",
+      "em": "",
+      "em_email": "",
+      "tech_debt_epic": "",
+      "linearb_team_name": "Risk Team"
+    }
+  ],
+  "fiscal_quarters": {
+    "_comment": "PayPay fiscal year starts April 1",
+    "FY24 Q4": {"start": "2024-01-01", "end": "2024-04-01"},
+    "FY25 Q1": {"start": "2024-04-01", "end": "2024-07-01"},
+    "FY25 Q2": {"start": "2024-07-01", "end": "2024-10-01"},
+    "FY25 Q3": {"start": "2024-10-01", "end": "2025-01-01"},
+    "FY25 Q4": {"start": "2025-01-01", "end": "2025-04-01"}
+  }
+}
+

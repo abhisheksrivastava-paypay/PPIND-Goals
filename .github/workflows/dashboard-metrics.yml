@@ -1,0 +1,164 @@
+# =============================================================================
+# GitHub Actions Workflow: KPI Dashboard Metrics Update
+# =============================================================================
+#
+# This workflow fetches data from LinearB and Jira APIs, generates JSON files,
+# and deploys the static dashboard to GitHub Pages.
+#
+# Schedule: Every Monday at 9:30 AM IST (4:00 AM UTC) - after weekly metrics
+#
+# REQUIRED GITHUB SECRETS:
+#   - LINEARB_API_KEY: Your LinearB API key
+#   - JIRA_API_KEY: Your Jira Personal Access Token
+#
+# OPTIONAL GITHUB SECRETS:
+#   - GOOGLE_CREDENTIALS: Base64-encoded Google service account JSON
+#
+# HOW TO ENABLE GITHUB PAGES:
+#   1. Go to Settings → Pages
+#   2. Source: GitHub Actions
+# =============================================================================
+
+name: Dashboard Metrics Update
+
+on:
+  # Scheduled run: Every Monday at 9:30 AM IST (4:00 AM UTC)
+  schedule:
+    - cron: '0 4 * * 1'
+  
+  # Manual trigger with options
+  workflow_dispatch:
+    inputs:
+      skip_linearb:
+        description: 'Skip LinearB data fetch'
+        required: false
+        type: boolean
+        default: false
+      skip_jira:
+        description: 'Skip Jira data fetch'
+        required: false
+        type: boolean
+        default: false
+      deploy_only:
+        description: 'Deploy only (skip all data fetching)'
+        required: false
+        type: boolean
+        default: false
+
+# Allow one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+# Grant permissions for GitHub Pages deployment
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+env:
+  LINEARB_API_KEY: ${{ secrets.LINEARB_API_KEY }}
+  JIRA_API_KEY: ${{ secrets.JIRA_API_KEY }}
+
+jobs:
+  # =============================================================================
+  # JOB 1: Fetch Data and Build Dashboard
+  # =============================================================================
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install uv (fast package installer)
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "requirements.txt"
+
+      - name: Install dependencies
+        run: |
+          uv pip install --system -r requirements.txt
+
+      # ---------------------------------------------------------------------
+      # Fetch LinearB Data (Cycle Time)
+      # ---------------------------------------------------------------------
+      - name: Fetch Cycle Time Data (LinearB)
+        if: ${{ github.event.inputs.deploy_only != 'true' && github.event.inputs.skip_linearb != 'true' }}
+        run: |
+          echo "📊 Fetching Cycle Time data from LinearB..."
+          python fetch_cycle_time.py --dashboard
+        continue-on-error: true
+
+      # ---------------------------------------------------------------------
+      # Fetch Jira Data (Lead Time, Tech Debts, Incidents)
+      # ---------------------------------------------------------------------
+      - name: Fetch Lead Time Data (Jira)
+        if: ${{ github.event.inputs.deploy_only != 'true' && github.event.inputs.skip_jira != 'true' }}
+        run: |
+          echo "📊 Fetching Lead Time data from Jira..."
+          python fetch_lead_time.py
+        continue-on-error: true
+
+      - name: Fetch Tech Debts Data (Jira)
+        if: ${{ github.event.inputs.deploy_only != 'true' && github.event.inputs.skip_jira != 'true' }}
+        run: |
+          echo "📊 Fetching Tech Debts data from Jira..."
+          python fetch_tech_debts.py
+        continue-on-error: true
+
+      - name: Fetch Incidents Data (Jira)
+        if: ${{ github.event.inputs.deploy_only != 'true' && github.event.inputs.skip_jira != 'true' }}
+        run: |
+          echo "📊 Fetching Incidents data from Jira..."
+          python fetch_incidents.py
+        continue-on-error: true
+
+      # ---------------------------------------------------------------------
+      # List generated files for debugging
+      # ---------------------------------------------------------------------
+      - name: List generated data files
+        run: |
+          echo "📁 Dashboard data files:"
+          ls -la dashboard/data/ || echo "No data files yet"
+          echo ""
+          echo "📁 Root data files:"
+          ls -la *.json *.csv 2>/dev/null || echo "No root data files"
+
+      # ---------------------------------------------------------------------
+      # Prepare Dashboard for Deployment
+      # ---------------------------------------------------------------------
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload dashboard artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dashboard
+
+  # =============================================================================
+  # JOB 2: Deploy to GitHub Pages
+  # =============================================================================
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Print dashboard URL
+        run: |
+          echo "✅ Dashboard deployed successfully!"
+          echo "🔗 URL: ${{ steps.deployment.outputs.page_url }}"
+

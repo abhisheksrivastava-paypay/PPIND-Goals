@@ -1,0 +1,17 @@
+# LinearB Weekly Metrics - Python Dependencies
+# Install with: pip install -r requirements.txt
+
+requests>=2.28.0
+pandas>=2.0.0
+matplotlib>=3.7.0
+slack_sdk>=3.21.0
+
+# Google APIs (optional - for Drive/Sheets upload)
+gspread>=5.10.0
+google-auth>=2.22.0
+google-api-python-client>=2.95.0
+
+# Jupyter (for notebook conversion in CI)
+jupyter>=1.0.0
+nbconvert>=7.0.0
+
