@@ -415,20 +415,20 @@ def get_fy_quarter_end_date(fy_year: int, quarter: int) -> datetime:
     - Q3 = Oct-Dec (ends Dec 31)
     - Q4 = Jan-Mar (ends Mar 31)
     
-    FY25 = Apr 2024 - Mar 2025
+    FY24 = Apr 2024 - Mar 2025, FY25 = Apr 2025 - Mar 2026
     """
     if quarter == 1:
-        # Q1 ends June 30 of the FY start year (FY25 Q1 ends June 30, 2024)
-        return datetime(fy_year - 1, 6, 30)
+        # FY24 Q1 ends June 30, 2024
+        return datetime(fy_year, 6, 30)
     elif quarter == 2:
-        # Q2 ends Sep 30 of the FY start year
-        return datetime(fy_year - 1, 9, 30)
+        # FY24 Q2 ends Sep 30, 2024
+        return datetime(fy_year, 9, 30)
     elif quarter == 3:
-        # Q3 ends Dec 31 of the FY start year
-        return datetime(fy_year - 1, 12, 31)
+        # FY24 Q3 ends Dec 31, 2024
+        return datetime(fy_year, 12, 31)
     else:  # quarter == 4
-        # Q4 ends Mar 31 of the FY end year
-        return datetime(fy_year, 3, 31)
+        # FY24 Q4 ends Mar 31, 2025
+        return datetime(fy_year + 1, 3, 31)
 
 
 def get_fy_quarter(dt: datetime) -> tuple:
@@ -441,23 +441,27 @@ def get_fy_quarter(dt: datetime) -> tuple:
     - Q3 = Oct-Dec
     - Q4 = Jan-Mar
     
+    FY is named by START year:
+    - FY24 = Apr 2024 - Mar 2025
+    - FY25 = Apr 2025 - Mar 2026
+    
     Returns: (fy_year, quarter)
-    Example: May 2024 → (FY25, Q1), Jan 2025 → (FY25, Q4)
+    Example: May 2024 → (FY24, Q1), Jan 2025 → (FY24, Q4), Oct 2025 → (FY25, Q3)
     """
     month = dt.month
     year = dt.year
     
     if month >= 4 and month <= 6:  # Apr-Jun = Q1
-        fy_year = year + 1  # FY25 for Apr-Jun 2024
+        fy_year = year  # FY24 for Apr-Jun 2024
         quarter = 1
     elif month >= 7 and month <= 9:  # Jul-Sep = Q2
-        fy_year = year + 1
+        fy_year = year
         quarter = 2
     elif month >= 10 and month <= 12:  # Oct-Dec = Q3
-        fy_year = year + 1
+        fy_year = year
         quarter = 3
     else:  # Jan-Mar = Q4
-        fy_year = year  # FY25 for Jan-Mar 2025
+        fy_year = year - 1  # FY24 for Jan-Mar 2025
         quarter = 4
     
     return (fy_year, quarter)
