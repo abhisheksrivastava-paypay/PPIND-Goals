@@ -1115,8 +1115,10 @@ function renderLeadTimeEpicsForQuarter(quarter) {
             : 'N/A';
         
         // Tech Modules column (only for PPIND scope)
+        const techModulesFormatted = formatTechModules(epic.tech_team);
+        const techModulesFull = formatTechModulesFull(epic.tech_team); // Full text for tooltip
         const techModulesCol = showTechModules 
-            ? `<td class="tech-modules-cell">${formatTechModules(epic.tech_team)}</td>`
+            ? `<td class="tech-modules-cell" title="${techModulesFull}">${techModulesFormatted}</td>`
             : '';
         
         return `
@@ -1168,13 +1170,14 @@ const PPIND_TECH_MODULES = [
     "O2O_Stamp Card BE"
 ];
 
-function formatTechModules(techTeam) {
-    if (!techTeam) return '-';
-    
-    // Split by comma and filter to only show PPIND modules
+function getPpindModules(techTeam) {
+    if (!techTeam) return [];
     const allModules = techTeam.split(',').map(m => m.trim());
-    const ppindModules = allModules.filter(m => PPIND_TECH_MODULES.includes(m));
-    
+    return allModules.filter(m => PPIND_TECH_MODULES.includes(m));
+}
+
+function formatTechModules(techTeam) {
+    const ppindModules = getPpindModules(techTeam);
     if (ppindModules.length === 0) return '-';
     
     // Format each module (remove common prefixes for brevity)
@@ -1189,6 +1192,13 @@ function formatTechModules(techTeam) {
     });
     
     return formatted.join(', ');
+}
+
+function formatTechModulesFull(techTeam) {
+    // Full module names for tooltip (no abbreviation)
+    const ppindModules = getPpindModules(techTeam);
+    if (ppindModules.length === 0) return 'No PPIND modules';
+    return ppindModules.join('\n');
 }
 
 // =============================================================================
