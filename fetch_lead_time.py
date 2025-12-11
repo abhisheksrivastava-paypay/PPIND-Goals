@@ -476,6 +476,26 @@ def group_by_quarter(results: List[Dict]) -> Dict[str, List[Dict]]:
     return quarters
 
 
+def is_ppind_epic(tech_team_value: str) -> bool:
+    """
+    Check if an epic belongs to PPIND based on Tech Modules field.
+    Tech Modules can be a comma-separated list of values.
+    Returns True if ANY of the values match PPIND_TECH_TEAMS.
+    """
+    if not tech_team_value:
+        return False
+    
+    # Split by comma in case of multiple values
+    tech_modules = [t.strip() for t in tech_team_value.split(",")]
+    
+    # Check if any module matches PPIND list
+    for module in tech_modules:
+        if module in PPIND_TECH_TEAMS:
+            return True
+    
+    return False
+
+
 def categorize_epics(results: List[Dict]) -> Dict[str, List[Dict]]:
     """Categorize epics into PayPay All, PPIND Only, and PayPay excl. PPIND."""
     ppind_only = []
@@ -483,11 +503,15 @@ def categorize_epics(results: List[Dict]) -> Dict[str, List[Dict]]:
     
     for epic in results:
         tech_team = epic.get("tech_team", "")
-        # Check if epic belongs to PPIND team
-        if tech_team and tech_team in PPIND_TECH_TEAMS:
+        # Check if epic belongs to PPIND team (handles multi-value field)
+        if is_ppind_epic(tech_team):
             ppind_only.append(epic)
         else:
             excl_ppind.append(epic)
+    
+    print(f"\n📊 Categorization Results:")
+    print(f"   PPIND Only: {len(ppind_only)} epics")
+    print(f"   Excl. PPIND: {len(excl_ppind)} epics")
     
     return {
         "paypay_all": results,  # All epics
