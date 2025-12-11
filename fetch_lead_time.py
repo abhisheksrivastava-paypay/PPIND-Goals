@@ -405,56 +405,104 @@ def calculate_summary_stats(results: List[Dict]) -> Dict[str, Any]:
     }
 
 
-def get_quarter_end_date(year: int, quarter: int) -> datetime:
-    """Get the last day of a quarter."""
+def get_fy_quarter_end_date(fy_year: int, quarter: int) -> datetime:
+    """
+    Get the last day of a fiscal year quarter.
+    
+    FY Quarters (FY starts April 1):
+    - Q1 = Apr-Jun (ends June 30)
+    - Q2 = Jul-Sep (ends Sep 30)
+    - Q3 = Oct-Dec (ends Dec 31)
+    - Q4 = Jan-Mar (ends Mar 31)
+    
+    FY25 = Apr 2024 - Mar 2025
+    """
     if quarter == 1:
-        return datetime(year, 3, 31)
+        # Q1 ends June 30 of the FY start year (FY25 Q1 ends June 30, 2024)
+        return datetime(fy_year - 1, 6, 30)
     elif quarter == 2:
-        return datetime(year, 6, 30)
+        # Q2 ends Sep 30 of the FY start year
+        return datetime(fy_year - 1, 9, 30)
     elif quarter == 3:
-        return datetime(year, 9, 30)
+        # Q3 ends Dec 31 of the FY start year
+        return datetime(fy_year - 1, 12, 31)
     else:  # quarter == 4
-        return datetime(year, 12, 31)
+        # Q4 ends Mar 31 of the FY end year
+        return datetime(fy_year, 3, 31)
+
+
+def get_fy_quarter(dt: datetime) -> tuple:
+    """
+    Get the fiscal year and quarter for a date.
+    
+    FY Quarters:
+    - Q1 = Apr-Jun
+    - Q2 = Jul-Sep
+    - Q3 = Oct-Dec
+    - Q4 = Jan-Mar
+    
+    Returns: (fy_year, quarter)
+    Example: May 2024 → (FY25, Q1), Jan 2025 → (FY25, Q4)
+    """
+    month = dt.month
+    year = dt.year
+    
+    if month >= 4 and month <= 6:  # Apr-Jun = Q1
+        fy_year = year + 1  # FY25 for Apr-Jun 2024
+        quarter = 1
+    elif month >= 7 and month <= 9:  # Jul-Sep = Q2
+        fy_year = year + 1
+        quarter = 2
+    elif month >= 10 and month <= 12:  # Oct-Dec = Q3
+        fy_year = year + 1
+        quarter = 3
+    else:  # Jan-Mar = Q4
+        fy_year = year  # FY25 for Jan-Mar 2025
+        quarter = 4
+    
+    return (fy_year, quarter)
 
 
 def assign_quarter_with_grace_period(dt: datetime, grace_days: int = 10) -> str:
     """
-    Assign a quarter to a date, with grace period for dates just after quarter end.
+    Assign a fiscal year quarter to a date, with grace period for dates just after quarter end.
     
     If the date is within 'grace_days' of the previous quarter's end, 
     assign it to the previous quarter.
     
-    Example: July 7, 2025 is within 10 days of Q2 end (June 30), so it's Q2 2025.
+    Example: July 7, 2024 is within 10 days of FY25 Q1 end (June 30), so it's FY25 Q1.
     """
-    # Calculate which quarter the date naturally falls into
-    natural_quarter = (dt.month - 1) // 3 + 1
-    natural_year = dt.year
+    # Get natural FY quarter
+    fy_year, quarter = get_fy_quarter(dt)
     
     # Check if we're in the grace period of the previous quarter
-    if natural_quarter == 1:
+    if quarter == 1:
         prev_quarter = 4
-        prev_year = natural_year - 1
+        prev_fy_year = fy_year - 1
     else:
-        prev_quarter = natural_quarter - 1
-        prev_year = natural_year
+        prev_quarter = quarter - 1
+        prev_fy_year = fy_year
     
-    prev_quarter_end = get_quarter_end_date(prev_year, prev_quarter)
+    prev_quarter_end = get_fy_quarter_end_date(prev_fy_year, prev_quarter)
     days_after_prev_quarter = (dt - prev_quarter_end).days
     
     # If within grace period, assign to previous quarter
     if 0 < days_after_prev_quarter <= grace_days:
-        return f"{prev_year} Q{prev_quarter}"
+        return f"FY{prev_fy_year % 100} Q{prev_quarter}"
     
-    return f"{natural_year} Q{natural_quarter}"
+    return f"FY{fy_year % 100} Q{quarter}"
 
 
 def group_by_quarter(results: List[Dict]) -> Dict[str, List[Dict]]:
     """
-    Group results by quarter based on Release Date (or Resolved Date as fallback).
+    Group results by FISCAL YEAR quarter based on Release Date (or Resolved Date as fallback).
+    
+    FY Quarters (FY starts April 1):
+    - Q1 = Apr-Jun, Q2 = Jul-Sep, Q3 = Oct-Dec, Q4 = Jan-Mar
     
     Uses a 10-day grace period: if end date is within 10 days of quarter end,
     the epic is still assigned to that quarter.
-    Example: July 7, 2025 → 2025 Q2 (not Q3)
+    Example: July 7, 2024 → FY25 Q1 (within 10 days of June 30)
     """
     quarters = {}
     
