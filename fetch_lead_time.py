@@ -35,9 +35,28 @@ JIRA_SERVER_URL = "https://paypay-corp.rickcloud.jp/jira"
 JIRA_API_BASE = f"{JIRA_SERVER_URL}/rest/api/2"
 
 # JQL Query for Epics - Only Done epics for lead time calculation
+# Uses Tech Modules field to identify PPIND epics
+# Covers all quarters from 2024 Q3 (Jul 2024) onwards
 JQL_QUERY = (
-    "project = PAYPAY AND issuetype = Epic AND status = Done AND "
-    "labels in (2025Q1_Delivery, 2025Q2_Delivery, 2024Q3_Delivery, 2024Q4_Delivery)"
+    'project = PAYPAY AND issuetype = Epic AND status = Done AND '
+    '"Tech Modules" in ('
+    '"Utility_PPIND Point", '
+    '"Utility_PPIND GenAI", '
+    '"FS_PPIND Financial Solutions", '
+    '"Utility_PPIND Gift Voucher", '
+    '"Utility_PPIND Mobile", '
+    '"Utility_PPIND PP4B", '
+    '"Utility_PPIND Web", '
+    '"Utility_PPIND Notification", '
+    '"O2O_PPIND Gift Voucher Reward Engine", '
+    '"Utility_PPIND Merchant Intelligence", '
+    '"Utility_PPIND Notification Delivery", '
+    '"Utility_PPIND Notification Platform", '
+    '"Utility_PPIND Websocket BE", '
+    '"Utility_PPIND Risk", '
+    '"O2O_Stamp Card FE", '
+    '"O2O_Stamp Card BE"'
+    ') AND resolved >= 2024-07-01'
 )
 
 # Custom Field IDs
@@ -50,7 +69,7 @@ FIELD_QA_TEAM = "customfield_16032"
 OUTPUT_JSON = "dashboard/data/lead_time_data.json"
 OUTPUT_CSV = "lead_time_data.csv"
 
-# PPIND Tech Teams (for filtering)
+# PPIND Tech Modules (for filtering - must match JQL query)
 PPIND_TECH_TEAMS = [
     "Utility_PPIND Point",
     "Utility_PPIND GenAI",
@@ -59,7 +78,6 @@ PPIND_TECH_TEAMS = [
     "Utility_PPIND Mobile",
     "Utility_PPIND PP4B",
     "Utility_PPIND Web",
-    "Utility_Infrastructure",
     "Utility_PPIND Notification",
     "O2O_PPIND Gift Voucher Reward Engine",
     "Utility_PPIND Merchant Intelligence",
