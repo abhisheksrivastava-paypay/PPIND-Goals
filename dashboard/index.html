@@ -212,16 +212,51 @@
                 </div>
 
                 <div class="calculation-info">
-                    <h4>📊 How This is Calculated</h4>
+                    <h4>📊 How Lead Time is Calculated</h4>
+                    
+                    <p><strong>Lead Time Formula:</strong> End Date − Start Date (shown in days)</p>
+                    
+                    <h5>Start Date Logic:</h5>
                     <ul>
-                        <li><strong>Lead Time:</strong> Duration from when work begins on an epic until it's released to production. Shown in days.</li>
-                        <li><strong>Start Date (Primary):</strong> "PRD Start Date" custom field in Jira - when the Product Requirements Document was started.</li>
-                        <li><strong>Start Date (Fallback):</strong> If PRD Start Date is empty, the Jira "Created Date" is used instead.</li>
-                        <li><strong>End Date (Primary):</strong> "Release Date" custom field in Jira - when the epic was deployed to production.</li>
-                        <li><strong>End Date (Fallback):</strong> If Release Date is empty, the Jira "Resolved Date" is used instead.</li>
-                        <li><strong>Scope Filters:</strong> "PPIND Only" shows epics with PPIND Tech Modules. "PayPay All" shows all PayPay epics.</li>
-                        <li><strong>Average:</strong> Sum of all lead times ÷ number of epics. Affected by outliers.</li>
-                        <li><strong>Median:</strong> Middle value when all lead times are sorted. More representative of typical epic.</li>
+                        <li><strong>Primary:</strong> "PRD Start Date" field (customfield_15410) - when Product Requirements Document was started</li>
+                        <li><strong>Fallback:</strong> If PRD Start Date is empty → use Jira "Created Date"</li>
+                    </ul>
+                    
+                    <h5>End Date Logic:</h5>
+                    <ul>
+                        <li><strong>Primary:</strong> "Release Date" field (customfield_10613) - when epic was released to production</li>
+                        <li><strong>Fallback:</strong> If Release Date is empty → use Jira "Resolved Date"</li>
+                        <li><strong>Null Case:</strong> If BOTH Release Date and Resolved Date are empty → Lead Time = null (epic excluded from calculations)</li>
+                    </ul>
+                    
+                    <h5>Quarter Assignment (with 10-day grace period):</h5>
+                    <ul>
+                        <li>Epics are grouped by quarter based on the <strong>End Date</strong> (Release Date or Resolved Date)</li>
+                        <li><strong>Grace Period:</strong> If End Date is within 10 calendar days after a quarter ends, the epic is still counted in that quarter</li>
+                        <li>Example: Release Date = July 7, 2025 → epic belongs to "2025 Q2" (within 10 days of June 30)</li>
+                        <li>Example: Release Date = July 15, 2025 → epic belongs to "2025 Q3" (beyond 10 days)</li>
+                    </ul>
+                    
+                    <h5>Scope Filters:</h5>
+                    <ul>
+                        <li><strong>PPIND Only:</strong> Epics with "Tech Modules" field matching PPIND teams (16 modules)</li>
+                        <li><strong>PayPay All:</strong> All PayPay project epics with PPIND Tech Modules</li>
+                        <li><strong>PayPay (excl. PPIND):</strong> Epics that do NOT have PPIND Tech Modules</li>
+                    </ul>
+                    
+                    <h5>Statistics:</h5>
+                    <ul>
+                        <li><strong>Avg Lead Time:</strong> Sum of all lead times ÷ number of epics with valid lead time. Affected by outliers.</li>
+                        <li><strong>Median Lead Time:</strong> Middle value when sorted. More representative of typical epic.</li>
+                        <li><strong>Total Epics:</strong> Count of epics with calculable lead time (excludes nulls)</li>
+                    </ul>
+                    
+                    <h5>Data Source:</h5>
+                    <ul>
+                        <li>Jira project: PAYPAY</li>
+                        <li>Issue type: Epic</li>
+                        <li>Status: Done only</li>
+                        <li>Date range: Resolved on or after July 1, 2024 (2024 Q3+)</li>
                     </ul>
                 </div>
             </section>
@@ -240,6 +275,6 @@
         <p>Loading dashboard data...</p>
     </div>
 
-    <script src="js/dashboard.js?v=20251211f"></script>
+    <script src="js/dashboard.js?v=20251211g"></script>
 </body>
 </html>

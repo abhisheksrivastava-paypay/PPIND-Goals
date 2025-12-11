@@ -405,8 +405,57 @@ def calculate_summary_stats(results: List[Dict]) -> Dict[str, Any]:
     }
 
 
+def get_quarter_end_date(year: int, quarter: int) -> datetime:
+    """Get the last day of a quarter."""
+    if quarter == 1:
+        return datetime(year, 3, 31)
+    elif quarter == 2:
+        return datetime(year, 6, 30)
+    elif quarter == 3:
+        return datetime(year, 9, 30)
+    else:  # quarter == 4
+        return datetime(year, 12, 31)
+
+
+def assign_quarter_with_grace_period(dt: datetime, grace_days: int = 10) -> str:
+    """
+    Assign a quarter to a date, with grace period for dates just after quarter end.
+    
+    If the date is within 'grace_days' of the previous quarter's end, 
+    assign it to the previous quarter.
+    
+    Example: July 7, 2025 is within 10 days of Q2 end (June 30), so it's Q2 2025.
+    """
+    # Calculate which quarter the date naturally falls into
+    natural_quarter = (dt.month - 1) // 3 + 1
+    natural_year = dt.year
+    
+    # Check if we're in the grace period of the previous quarter
+    if natural_quarter == 1:
+        prev_quarter = 4
+        prev_year = natural_year - 1
+    else:
+        prev_quarter = natural_quarter - 1
+        prev_year = natural_year
+    
+    prev_quarter_end = get_quarter_end_date(prev_year, prev_quarter)
+    days_after_prev_quarter = (dt - prev_quarter_end).days
+    
+    # If within grace period, assign to previous quarter
+    if 0 < days_after_prev_quarter <= grace_days:
+        return f"{prev_year} Q{prev_quarter}"
+    
+    return f"{natural_year} Q{natural_quarter}"
+
+
 def group_by_quarter(results: List[Dict]) -> Dict[str, List[Dict]]:
-    """Group results by quarter based on release/resolved date."""
+    """
+    Group results by quarter based on Release Date (or Resolved Date as fallback).
+    
+    Uses a 10-day grace period: if end date is within 10 days of quarter end,
+    the epic is still assigned to that quarter.
+    Example: July 7, 2025 → 2025 Q2 (not Q3)
+    """
     quarters = {}
     
     for r in results:
@@ -416,8 +465,7 @@ def group_by_quarter(results: List[Dict]) -> Dict[str, List[Dict]]:
         else:
             try:
                 dt = datetime.strptime(end_date[:10], "%Y-%m-%d")
-                q = (dt.month - 1) // 3 + 1
-                quarter = f"{dt.year} Q{q}"
+                quarter = assign_quarter_with_grace_period(dt, grace_days=10)
             except:
                 quarter = "Unknown"
         

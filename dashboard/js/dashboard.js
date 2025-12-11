@@ -898,11 +898,14 @@ function renderLeadTimeForScope(scope) {
         return;
     }
     
-    // Update stats
+    // Update stats - always show in days
     const summary = dataset.summary || {};
-    document.getElementById('avgLeadTime').textContent = summary.avg_lead_time_readable || `${summary.avg_lead_time_days || 0} days`;
-    document.getElementById('medianLeadTime').textContent = summary.median_lead_time_readable || `${summary.median_lead_time_days || 0} days`;
-    document.getElementById('totalEpics').textContent = summary.total_epics || '0';
+    const avgDays = summary.avg_lead_time_days;
+    const medianDays = summary.median_lead_time_days;
+    
+    document.getElementById('avgLeadTime').textContent = avgDays != null ? `${Math.round(avgDays)} days` : '-';
+    document.getElementById('medianLeadTime').textContent = medianDays != null ? `${Math.round(medianDays)} days` : '-';
+    document.getElementById('totalEpics').textContent = summary.epics_with_lead_time || summary.total_epics || '0';
     
     // Render chart and table
     renderLeadTimeChart(dataset);
