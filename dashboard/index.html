@@ -55,14 +55,14 @@
                             <tr>
                                 <th>Incidents</th>
                                 <th>Releases</th>
-                                <th>Incident Ratio</th>
+                                <th>Ratio</th>
                                 <th>Incidents</th>
                                 <th>Releases</th>
-                                <th>Incident Ratio</th>
+                                <th>Ratio</th>
                                 <th>Incidents</th>
                                 <th>Releases</th>
-                                <th>Incident Ratio</th>
-                                <th>Incident Link</th>
+                                <th>Ratio</th>
+                                <th>Links</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -83,13 +83,23 @@
                         </tfoot>
                     </table>
                 </div>
+
+                <div class="calculation-info">
+                    <h4>📊 How This is Calculated</h4>
+                    <ul>
+                        <li><strong>Incidents:</strong> Count of production incidents (IMA project tickets) attributed to each team during the quarter.</li>
+                        <li><strong>Releases:</strong> Number of production releases/deployments by each team during the quarter.</li>
+                        <li><strong>Incident Ratio:</strong> (Incidents ÷ Releases) × 100. Lower is better. A ratio of 0% means no incidents.</li>
+                        <li><strong>Color Coding:</strong> <span class="cell-green" style="padding:2px 6px;border-radius:4px;">Green</span> = ratio decreased or is 0%, <span class="cell-red" style="padding:2px 6px;border-radius:4px;">Red</span> = ratio increased vs baseline.</li>
+                    </ul>
+                </div>
             </section>
 
             <!-- Tech Debts Section -->
             <section id="tech-debts" class="tab-content">
                 <div class="section-header">
                     <h2>PPIND FY25 Tech Debts</h2>
-                    <p class="section-desc">Technical debt reduction tracking by quarter</p>
+                    <p class="section-desc">Technical debt reduction tracking by quarter. Goal: ≥20% reduction per quarter.</p>
                 </div>
 
                 <div class="chart-container">
@@ -97,39 +107,19 @@
                 </div>
 
                 <div class="data-table-container">
-                    <table class="data-table kpi-table" id="techDebtsTable">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Team</th>
-                                <th>EM</th>
-                                <th>Tech Debt Epic</th>
-                                <th>Q1 Baseline</th>
-                                <th>Q1 Reduction - Count</th>
-                                <th>Q1 Reduction - %</th>
-                                <th>Q2 Baseline</th>
-                                <th>Q2 Reduction - Count</th>
-                                <th>Q2 Reduction - %</th>
-                                <th>Q3 Baseline</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                        <tfoot>
-                            <tr class="totals-row">
-                                <td></td>
-                                <td><strong>Total</strong></td>
-                                <td></td>
-                                <td></td>
-                                <td id="tdTotalQ1Baseline">-</td>
-                                <td id="tdTotalQ1Reduction">-</td>
-                                <td id="tdTotalQ1Percent">-</td>
-                                <td id="tdTotalQ2Baseline">-</td>
-                                <td id="tdTotalQ2Reduction">-</td>
-                                <td id="tdTotalQ2Percent">-</td>
-                                <td id="tdTotalQ3Baseline">-</td>
-                            </tr>
-                        </tfoot>
-                    </table>
+                    <!-- Table generated dynamically by JavaScript -->
+                </div>
+
+                <div class="calculation-info">
+                    <h4>📊 How This is Calculated</h4>
+                    <ul>
+                        <li><strong>Start (Baseline):</strong> Count of open tech debt tickets in the team's epic on the first day of the quarter.</li>
+                        <li><strong>Reduced:</strong> Number of tech debt tickets resolved (closed) during the quarter.</li>
+                        <li><strong>% Reduction:</strong> (Reduced ÷ Start) × 100. Higher is better.</li>
+                        <li><strong>Goal:</strong> Each team should reduce at least 20% of their tech debt per quarter.</li>
+                        <li><strong>Color Coding:</strong> <span class="cell-green" style="padding:2px 6px;border-radius:4px;">Green</span> = ≥20% reduction (goal met), <span class="cell-red" style="padding:2px 6px;border-radius:4px;">Red</span> = &lt;20% (below goal).</li>
+                        <li><strong>WIP:</strong> Current quarter data is work-in-progress and updated weekly. Final numbers available after quarter ends.</li>
+                    </ul>
                 </div>
             </section>
 
@@ -137,7 +127,7 @@
             <section id="cycle-time" class="tab-content">
                 <div class="section-header">
                     <h2>Cycle Time (P50)</h2>
-                    <p class="section-desc">Average P50 Cycle Time from first commit to production by team</p>
+                    <p class="section-desc">P50 (median) Cycle Time from first commit to production deployment, by team.</p>
                 </div>
 
                 <div class="chart-container">
@@ -145,31 +135,20 @@
                 </div>
 
                 <div class="data-table-container">
-                    <table class="data-table kpi-table" id="cycleTimeTable">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Team</th>
-                                <th>EM</th>
-                                <th>Baseline Cycle Time (Revised)<br><small>(Average of P50 for 3 months)</small></th>
-                                <th>Cycle Time<br><small>(Jul, Aug, Sep)</small></th>
-                                <th>Cycle Time<br><small>(Latest Month)</small></th>
-                                <th>LinearB Dashboard Links</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                        <tfoot>
-                            <tr class="totals-row">
-                                <td></td>
-                                <td><strong>PPIND</strong></td>
-                                <td></td>
-                                <td id="ctBaselineTotal">-</td>
-                                <td id="ctQ1Total">-</td>
-                                <td id="ctLatestTotal">-</td>
-                                <td></td>
-                            </tr>
-                        </tfoot>
-                    </table>
+                    <!-- Table generated dynamically by JavaScript -->
+                </div>
+
+                <div class="calculation-info">
+                    <h4>📊 How This is Calculated</h4>
+                    <ul>
+                        <li><strong>Cycle Time:</strong> Time from first commit on a branch to when that code is deployed to production. Measured for each PR merged.</li>
+                        <li><strong>P50 (Median):</strong> The 50th percentile value. Half of all PRs have cycle time below this, half above. More stable than average.</li>
+                        <li><strong>Baseline:</strong> Average of P50 cycle times for June, July, and August 2025. Used as reference point.</li>
+                        <li><strong>Prev 3 Months Avg:</strong> Rolling average of the 3 months before the current month (e.g., for Dec: Sep + Oct + Nov average).</li>
+                        <li><strong>Trend Arrows:</strong> ↑ = cycle time increased (worse), ↓ = cycle time decreased (better).</li>
+                        <li><strong>Color Coding:</strong> <span class="cell-green" style="padding:2px 6px;border-radius:4px;">Green</span> = faster than baseline, <span class="cell-red" style="padding:2px 6px;border-radius:4px;">Red</span> = slower than baseline.</li>
+                        <li><strong>Data Source:</strong> LinearB API. Click team links to view detailed metrics in LinearB dashboard.</li>
+                    </ul>
                 </div>
             </section>
 
@@ -208,19 +187,42 @@
 
                 <div class="data-table-container">
                     <h3>Epics by Quarter</h3>
-                    <table class="data-table" id="leadTimeTable">
-                        <thead>
-                            <tr>
-                                <th>Epic</th>
-                                <th>Summary</th>
-                                <th>Status</th>
-                                <th>Lead Time</th>
-                                <th>Start Date</th>
-                                <th>End Date</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
+                    
+                    <!-- Quarter Sub-Tabs -->
+                    <nav class="quarter-tabs" id="leadTimeQuarterTabs">
+                        <!-- Tabs will be generated dynamically -->
+                    </nav>
+                    
+                    <!-- Quarter Content -->
+                    <div id="leadTimeQuarterContent">
+                        <table class="data-table" id="leadTimeTable">
+                            <thead>
+                                <tr>
+                                    <th>Epic</th>
+                                    <th>Summary</th>
+                                    <th>Status</th>
+                                    <th>Lead Time (days)</th>
+                                    <th>Start Date</th>
+                                    <th>End Date</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="calculation-info">
+                    <h4>📊 How This is Calculated</h4>
+                    <ul>
+                        <li><strong>Lead Time:</strong> Duration from when work begins on an epic until it's released to production. Shown in days.</li>
+                        <li><strong>Start Date (Primary):</strong> "PRD Start Date" custom field in Jira - when the Product Requirements Document was started.</li>
+                        <li><strong>Start Date (Fallback):</strong> If PRD Start Date is empty, the Jira "Created Date" is used instead.</li>
+                        <li><strong>End Date (Primary):</strong> "Release Date" custom field in Jira - when the epic was deployed to production.</li>
+                        <li><strong>End Date (Fallback):</strong> If Release Date is empty, the Jira "Resolved Date" is used instead.</li>
+                        <li><strong>Scope Filters:</strong> "PPIND Only" shows epics with PPIND Tech Modules. "PayPay All" shows all PayPay epics.</li>
+                        <li><strong>Average:</strong> Sum of all lead times ÷ number of epics. Affected by outliers.</li>
+                        <li><strong>Median:</strong> Middle value when all lead times are sorted. More representative of typical epic.</li>
+                    </ul>
                 </div>
             </section>
 
@@ -238,6 +240,6 @@
         <p>Loading dashboard data...</p>
     </div>
 
-    <script src="js/dashboard.js?v=20251211e"></script>
+    <script src="js/dashboard.js?v=20251211f"></script>
 </body>
 </html>

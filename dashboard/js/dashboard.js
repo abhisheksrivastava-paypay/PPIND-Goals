@@ -720,7 +720,26 @@ function renderCycleTimeChartFromSample(data) {
                     }
                 }
             }
-        }
+        },
+        plugins: [{
+            // Add duration labels on top of bars
+            afterDatasetsDraw: function(chart) {
+                const ctx = chart.ctx;
+                chart.data.datasets.forEach((dataset, i) => {
+                    const meta = chart.getDatasetMeta(i);
+                    meta.data.forEach((bar, index) => {
+                        const data = dataset.data[index];
+                        if (data > 0) {
+                            ctx.fillStyle = '#1e293b';
+                            ctx.font = '10px Inter';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'bottom';
+                            ctx.fillText(formatDurationShort(data), bar.x, bar.y - 2);
+                        }
+                    });
+                });
+            }
+        }]
     });
 }
 
@@ -973,7 +992,27 @@ function renderLeadTimeChart(data) {
                     }
                 }
             }
-        }
+        },
+        plugins: [{
+            // Add labels on bars
+            afterDatasetsDraw: function(chart) {
+                const ctx = chart.ctx;
+                chart.data.datasets.forEach((dataset, i) => {
+                    const meta = chart.getDatasetMeta(i);
+                    if (dataset.type === 'line') return; // Skip line dataset
+                    meta.data.forEach((bar, index) => {
+                        const data = dataset.data[index];
+                        if (data > 0) {
+                            ctx.fillStyle = '#1e293b';
+                            ctx.font = 'bold 11px Inter';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'bottom';
+                            ctx.fillText(Math.round(data) + 'd', bar.x, bar.y - 3);
+                        }
+                    });
+                });
+            }
+        }]
     });
 }
 
