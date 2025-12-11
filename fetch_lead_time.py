@@ -574,6 +574,21 @@ def group_by_quarter(results: List[Dict]) -> Dict[str, List[Dict]]:
     return quarters
 
 
+def normalize_module_name(name: str) -> str:
+    """Normalize module name for comparison (handle encoding variations)."""
+    # Replace various underscore-like characters with standard underscore
+    name = name.replace('\u2010', '-')  # hyphen
+    name = name.replace('\u2011', '-')  # non-breaking hyphen
+    name = name.replace('\u2012', '-')  # figure dash
+    name = name.replace('\u2013', '-')  # en dash
+    name = name.replace('\u2014', '-')  # em dash
+    name = name.replace('\u00a0', ' ')  # non-breaking space
+    name = name.replace('\u200b', '')   # zero-width space
+    # Normalize whitespace
+    name = ' '.join(name.split())
+    return name.strip()
+
+
 def is_ppind_epic(tech_team_value: str) -> bool:
     """
     Check if an epic belongs to PPIND based on Tech Modules field.
@@ -583,13 +598,23 @@ def is_ppind_epic(tech_team_value: str) -> bool:
     if not tech_team_value:
         return False
     
+    # Normalize the PPIND list for comparison
+    normalized_ppind = {normalize_module_name(t) for t in PPIND_TECH_TEAMS}
+    
     # Split by comma in case of multiple values
     tech_modules = [t.strip() for t in tech_team_value.split(",")]
     
-    # Check if any module matches PPIND list
+    # Check if any module matches PPIND list (with normalization)
     for module in tech_modules:
-        if module in PPIND_TECH_TEAMS:
+        normalized_module = normalize_module_name(module)
+        if normalized_module in normalized_ppind:
             return True
+        # Also check for partial match (module contains PPIND keyword)
+        if "PPIND" in normalized_module.upper():
+            # Double check it's in our list (case-insensitive)
+            for ppind_team in PPIND_TECH_TEAMS:
+                if normalize_module_name(ppind_team).lower() == normalized_module.lower():
+                    return True
     
     return False
 
