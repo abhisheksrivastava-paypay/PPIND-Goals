@@ -1148,22 +1148,47 @@ function truncate(str, maxLength) {
     return str.length > maxLength ? str.substring(0, maxLength) + '...' : str;
 }
 
+// PPIND Tech Modules list (must match Python script)
+const PPIND_TECH_MODULES = [
+    "Utility_PPIND Point",
+    "Utility_PPIND GenAI",
+    "FS_PPIND Financial Solutions",
+    "Utility_PPIND Gift Voucher",
+    "Utility_PPIND Mobile",
+    "Utility_PPIND PP4B",
+    "Utility_PPIND Web",
+    "Utility_PPIND Notification",
+    "O2O_PPIND Gift Voucher Reward Engine",
+    "Utility_PPIND Merchant Intelligence",
+    "Utility_PPIND Notification Delivery",
+    "Utility_PPIND Notification Platform",
+    "Utility_PPIND Websocket BE",
+    "Utility_PPIND Risk",
+    "O2O_Stamp Card FE",
+    "O2O_Stamp Card BE"
+];
+
 function formatTechModules(techTeam) {
     if (!techTeam) return '-';
     
-    // Split by comma and format each module (remove common prefixes for brevity)
-    const modules = techTeam.split(',').map(m => {
-        let module = m.trim();
-        // Remove common prefixes to save space
-        module = module.replace(/^Utility_PPIND\s*/i, '');
-        module = module.replace(/^FS_PPIND\s*/i, '');
-        module = module.replace(/^O2O_PPIND\s*/i, '');
-        module = module.replace(/^O2O_/i, '');
-        module = module.replace(/^Utility_/i, '');
-        return module;
+    // Split by comma and filter to only show PPIND modules
+    const allModules = techTeam.split(',').map(m => m.trim());
+    const ppindModules = allModules.filter(m => PPIND_TECH_MODULES.includes(m));
+    
+    if (ppindModules.length === 0) return '-';
+    
+    // Format each module (remove common prefixes for brevity)
+    const formatted = ppindModules.map(module => {
+        let short = module;
+        short = short.replace(/^Utility_PPIND\s*/i, '');
+        short = short.replace(/^FS_PPIND\s*/i, '');
+        short = short.replace(/^O2O_PPIND\s*/i, '');
+        short = short.replace(/^O2O_/i, '');
+        short = short.replace(/^Utility_/i, '');
+        return short;
     });
     
-    return modules.join(', ');
+    return formatted.join(', ');
 }
 
 // =============================================================================
