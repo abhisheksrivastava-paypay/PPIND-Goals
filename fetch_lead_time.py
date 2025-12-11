@@ -601,8 +601,20 @@ def categorize_epics(results: List[Dict]) -> Dict[str, List[Dict]]:
     
     for epic in results:
         tech_team = epic.get("tech_team", "")
+        epic_key = epic.get("epic_key", "")
         # Check if epic belongs to PPIND team (handles multi-value field)
-        if is_ppind_epic(tech_team):
+        is_ppind = is_ppind_epic(tech_team)
+        
+        # Debug: Log specific epic and any PP4B mismatch
+        if epic_key == "PP-333742" or ("PP4B" in tech_team and not is_ppind):
+            print(f"   🔍 DEBUG {epic_key}: tech_team='{tech_team}', is_ppind={is_ppind}")
+            if tech_team:
+                modules = [t.strip() for t in tech_team.split(",")]
+                print(f"      Parsed modules: {modules}")
+                for m in modules:
+                    print(f"      - '{m}' in PPIND_TECH_TEAMS? {m in PPIND_TECH_TEAMS}")
+        
+        if is_ppind:
             ppind_only.append(epic)
         else:
             excl_ppind.append(epic)
