@@ -1073,10 +1073,37 @@ function renderLeadTimeTable(data) {
 
 function renderLeadTimeEpicsForQuarter(quarter) {
     const tbody = document.querySelector('#leadTimeTable tbody');
+    const thead = document.querySelector('#leadTimeTable thead tr');
     const epics = leadTimeByQuarter[quarter] || [];
     
+    // Check if we should show Tech Modules column (only for PPIND scope)
+    const showTechModules = currentLeadTimeScope === 'ppind_only';
+    const colSpan = showTechModules ? 7 : 6;
+    
+    // Update table header dynamically
+    if (showTechModules) {
+        thead.innerHTML = `
+            <th>Epic</th>
+            <th>Summary</th>
+            <th>Status</th>
+            <th>Lead Time (days)</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Tech Module(s)</th>
+        `;
+    } else {
+        thead.innerHTML = `
+            <th>Epic</th>
+            <th>Summary</th>
+            <th>Status</th>
+            <th>Lead Time (days)</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+        `;
+    }
+    
     if (epics.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No epics for this quarter</td></tr>';
+        tbody.innerHTML = `<tr><td colspan="${colSpan}" class="empty-state">No epics for this quarter</td></tr>`;
         return;
     }
     
@@ -1085,7 +1112,12 @@ function renderLeadTimeEpicsForQuarter(quarter) {
         const leadTimeDays = epic.lead_time_days;
         const leadTimeDisplay = leadTimeDays !== null && leadTimeDays !== undefined 
             ? `${leadTimeDays} days` 
-            : (epic.lead_time_readable || '-');
+            : 'N/A';
+        
+        // Tech Modules column (only for PPIND scope)
+        const techModulesCol = showTechModules 
+            ? `<td class="tech-modules-cell">${formatTechModules(epic.tech_team)}</td>`
+            : '';
         
         return `
             <tr>
@@ -1095,6 +1127,7 @@ function renderLeadTimeEpicsForQuarter(quarter) {
                 <td>${leadTimeDisplay}</td>
                 <td>${formatDate(epic.lead_time_start)}</td>
                 <td>${formatDate(epic.lead_time_end)}</td>
+                ${techModulesCol}
             </tr>
         `;
     }).join('');
@@ -1113,6 +1146,24 @@ function getStatusClass(status) {
 function truncate(str, maxLength) {
     if (!str) return '';
     return str.length > maxLength ? str.substring(0, maxLength) + '...' : str;
+}
+
+function formatTechModules(techTeam) {
+    if (!techTeam) return '-';
+    
+    // Split by comma and format each module (remove common prefixes for brevity)
+    const modules = techTeam.split(',').map(m => {
+        let module = m.trim();
+        // Remove common prefixes to save space
+        module = module.replace(/^Utility_PPIND\s*/i, '');
+        module = module.replace(/^FS_PPIND\s*/i, '');
+        module = module.replace(/^O2O_PPIND\s*/i, '');
+        module = module.replace(/^O2O_/i, '');
+        module = module.replace(/^Utility_/i, '');
+        return module;
+    });
+    
+    return modules.join(', ');
 }
 
 // =============================================================================

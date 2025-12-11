@@ -567,6 +567,16 @@ body {
     color: #0f172a;
 }
 
+/* Tech Modules cell - small font to save space */
+.tech-modules-cell {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    max-width: 150px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 /* Empty state */
 .empty-state {
     text-align: center;
