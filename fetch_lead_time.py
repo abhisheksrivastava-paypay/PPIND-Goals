@@ -34,30 +34,76 @@ from urllib.parse import quote
 JIRA_SERVER_URL = "https://paypay-corp.rickcloud.jp/jira"
 JIRA_API_BASE = f"{JIRA_SERVER_URL}/rest/api/2"
 
-# JQL Query for Epics - Only Done epics for lead time calculation
-# Uses Tech Modules field to identify PPIND epics
-# Covers all quarters from 2024 Q3 (Jul 2024) onwards
-JQL_QUERY = (
-    'project = PAYPAY AND issuetype = Epic AND status = Done AND '
-    '"Tech Modules" in ('
-    '"Utility_PPIND Point", '
-    '"Utility_PPIND GenAI", '
-    '"FS_PPIND Financial Solutions", '
-    '"Utility_PPIND Gift Voucher", '
-    '"Utility_PPIND Mobile", '
-    '"Utility_PPIND PP4B", '
-    '"Utility_PPIND Web", '
-    '"Utility_PPIND Notification", '
-    '"O2O_PPIND Gift Voucher Reward Engine", '
-    '"Utility_PPIND Merchant Intelligence", '
-    '"Utility_PPIND Notification Delivery", '
-    '"Utility_PPIND Notification Platform", '
-    '"Utility_PPIND Websocket BE", '
-    '"Utility_PPIND Risk", '
-    '"O2O_Stamp Card FE", '
-    '"O2O_Stamp Card BE"'
-    ') AND resolved >= 2024-07-01'
-)
+
+def get_delivery_labels(num_quarters: int = 4) -> List[str]:
+    """
+    Generate delivery label names for the most recently ended quarter
+    and the specified number of quarters before it.
+    
+    Labels are in format: YYYYQ[1-4]_Delivery (calendar year quarters)
+    
+    Example for Dec 2025:
+    - Most recently ended: 2025Q3 (Jul-Sep 2025)
+    - Returns: ['2024Q4_Delivery', '2025Q1_Delivery', '2025Q2_Delivery', '2025Q3_Delivery']
+    """
+    today = datetime.now()
+    
+    # Calculate current calendar quarter
+    current_quarter = (today.month - 1) // 3 + 1
+    current_year = today.year
+    
+    # Most recently ended quarter is the one before current
+    if current_quarter == 1:
+        last_ended_quarter = 4
+        last_ended_year = current_year - 1
+    else:
+        last_ended_quarter = current_quarter - 1
+        last_ended_year = current_year
+    
+    # Generate labels going backwards
+    labels = []
+    year = last_ended_year
+    quarter = last_ended_quarter
+    
+    for _ in range(num_quarters):
+        labels.append(f"{year}Q{quarter}_Delivery")
+        # Go to previous quarter
+        if quarter == 1:
+            quarter = 4
+            year -= 1
+        else:
+            quarter -= 1
+    
+    # Reverse to have chronological order
+    labels.reverse()
+    return labels
+
+
+def build_jql_query() -> str:
+    """
+    Build the JQL query dynamically with delivery labels filter.
+    
+    Filters:
+    - project = PAYPAY
+    - issuetype = Epic
+    - status = Done
+    - labels in delivery labels for last 4 quarters
+    
+    Note: Tech Modules filtering is done in Python to support
+    PayPay All / PPIND Only / excl. PPIND scopes.
+    """
+    delivery_labels = get_delivery_labels(4)
+    labels_str = ", ".join(delivery_labels)
+    
+    jql = (
+        'project = PAYPAY AND issuetype = Epic AND status = Done AND '
+        f'labels in ({labels_str})'
+    )
+    return jql
+
+
+# Default JQL (will be built dynamically in main)
+JQL_QUERY = build_jql_query()
 
 # Custom Field IDs
 FIELD_PRD_START_DATE = "customfield_15410"
@@ -642,13 +688,18 @@ def main():
         print("   Set it with: export JIRA_API_KEY='your-personal-access-token'")
         sys.exit(1)
     
+    # Build JQL dynamically with current delivery labels
+    delivery_labels = get_delivery_labels(4)
+    jql = build_jql_query()
+    
     # Allow JQL override via environment variable
-    jql = os.getenv("LEAD_TIME_JQL", JQL_QUERY)
+    jql = os.getenv("LEAD_TIME_JQL", jql)
     
     print("=" * 60)
     print("📊 Jira Lead Time Calculator")
     print("=" * 60)
     print(f"   Note: Only considering Done epics")
+    print(f"   Delivery Labels: {', '.join(delivery_labels)}")
     
     # Process epics
     results = process_epics(pat, jql)

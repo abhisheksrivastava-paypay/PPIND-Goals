@@ -239,10 +239,18 @@
                         <li>Example: Release Date = July 15, 2024 → epic belongs to "FY24 Q2" (beyond 10 days)</li>
                     </ul>
                     
+                    <h5>Delivery Labels Filter:</h5>
+                    <ul>
+                        <li>Only epics with <strong>delivery labels</strong> are included</li>
+                        <li>Label format: <code>YYYYQ[1-4]_Delivery</code> (calendar year quarters)</li>
+                        <li>Shows: Most recently ended quarter + 3 previous quarters</li>
+                        <li>Example for Dec 2025: <code>2024Q4_Delivery, 2025Q1_Delivery, 2025Q2_Delivery, 2025Q3_Delivery</code></li>
+                    </ul>
+                    
                     <h5>Scope Filters:</h5>
                     <ul>
                         <li><strong>PPIND Only:</strong> Epics with "Tech Modules" field matching PPIND teams (16 modules)</li>
-                        <li><strong>PayPay All:</strong> All PayPay project epics with PPIND Tech Modules</li>
+                        <li><strong>PayPay All:</strong> All PayPay project epics (with delivery labels)</li>
                         <li><strong>PayPay (excl. PPIND):</strong> Epics that do NOT have PPIND Tech Modules</li>
                     </ul>
                     
@@ -258,7 +266,7 @@
                         <li>Jira project: PAYPAY</li>
                         <li>Issue type: Epic</li>
                         <li>Status: Done only</li>
-                        <li>Date range: Resolved on or after July 1, 2024 (2024 Q3+)</li>
+                        <li>Labels: Delivery labels for last 4 calendar quarters</li>
                     </ul>
                 </div>
             </section>
@@ -277,6 +285,6 @@
         <p>Loading dashboard data...</p>
     </div>
 
-    <script src="js/dashboard.js?v=20251211m"></script>
+    <script src="js/dashboard.js?v=20251211n"></script>
 </body>
 </html>
