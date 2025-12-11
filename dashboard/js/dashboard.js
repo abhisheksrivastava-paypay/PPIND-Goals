@@ -170,23 +170,33 @@ function createTechDebtJiraLink(epicKeys, quarter, type, count) {
     const dates = QUARTER_DATES[quarter];
     if (!dates) return String(count);
     
-    // Build epic link condition
-    const epicCondition = epics.map(e => `"Epic Link" = ${e}`).join(' OR ');
+    // Build epic link condition - matches Python script format
+    // Epic key without quotes, OR parent for sub-tasks
+    const epicCondition = epics.map(e => `("Epic Link" = ${e} OR parent = ${e})`).join(' OR ');
+    
+    // Issue types with quotes (matches Python: "Story", "Task", "Sub-task", "Bug")
+    const issueTypes = '"Story", "Task", "Sub-task", "Bug"';
     
     let jql = '';
     if (type === 'start') {
-        // Tickets that existed at start of quarter (created before quarter start and not resolved before quarter start)
-        jql = `(${epicCondition}) AND issuetype in (Story, Task, Sub-task) AND created < "${dates.start}" AND (resolved >= "${dates.start}" OR resolved IS EMPTY)`;
+        // Tickets that existed at start of quarter:
+        // Created before quarter start AND (not resolved yet OR resolved after quarter start)
+        jql = `(${epicCondition}) AND issuetype IN (${issueTypes}) AND created < "${dates.start}" AND (resolved IS EMPTY OR resolved >= "${dates.start}")`;
     } else if (type === 'reduced') {
         // Tickets resolved during the quarter
-        jql = `(${epicCondition}) AND issuetype in (Story, Task, Sub-task) AND resolved >= "${dates.start}" AND resolved <= "${dates.end}"`;
+        jql = `(${epicCondition}) AND issuetype IN (${issueTypes}) AND resolved >= "${dates.start}" AND resolved <= "${dates.end}"`;
     } else if (type === 'current') {
         // Current open tickets (for WIP quarter)
-        jql = `(${epicCondition}) AND issuetype in (Story, Task, Sub-task) AND resolution IS EMPTY`;
+        jql = `(${epicCondition}) AND issuetype IN (${issueTypes}) AND resolution IS EMPTY`;
     }
     
+    // Use Jira Server search URL format
+    const jiraSearchUrl = 'https://paypay-corp.rickcloud.jp/jira/issues/?jql=';
     const encodedJql = encodeURIComponent(jql);
-    return `<a href="${JIRA_SEARCH_URL}${encodedJql}" target="_blank" class="jira-link">${count}</a>`;
+    
+    // Add tooltip showing the JQL for debugging
+    const escapedJql = jql.replace(/"/g, '&quot;');
+    return `<a href="${jiraSearchUrl}${encodedJql}" target="_blank" class="jira-link" title="${escapedJql}">${count}</a>`;
 }
 
 function formatEM(name) {
